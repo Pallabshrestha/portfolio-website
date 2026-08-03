@@ -1459,6 +1459,10 @@ a {
 .cid-uiNsannTJc img {
   height: auto;
   aspect-ratio: 703 / 527;
+  /* contain, never cover: the tile art must never be cropped. The box already
+     matches the artwork ratio, so this letterboxes only if something else
+     ever forces a different shape. */
+  object-fit: contain;
 }
 @media (min-width: 992px) {
   .cid-uiNsannTJc .item-content {
