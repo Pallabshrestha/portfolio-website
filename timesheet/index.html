@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calendar Timesheet</title>
+<link rel="stylesheet" href="styles.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗓️</text></svg>">
+</head>
+<body>
+
+<header class="topbar no-print">
+  <div class="brand">
+    <span class="brand-mark">TS</span>
+    <div>
+      <h1>Calendar Timesheet</h1>
+      <p>Google Calendar &rarr; monthly timesheet</p>
+    </div>
+  </div>
+  <div class="topbar-actions">
+    <span id="authStatus" class="status status-off">Not connected</span>
+    <button id="btnConnect" class="btn btn-primary">Connect Google Calendar</button>
+    <button id="btnSignOut" class="btn btn-ghost hidden">Sign out</button>
+  </div>
+</header>
+
+<main class="layout">
+
+  <!-- ─────────────── SIDEBAR ─────────────── -->
+  <aside class="sidebar no-print">
+
+    <section class="panel" id="setupPanel">
+      <h2>1 &middot; Google setup</h2>
+      <label class="field">
+        <span>OAuth Client ID</span>
+        <input type="text" id="clientId" placeholder="xxxxxxxx.apps.googleusercontent.com" spellcheck="false">
+      </label>
+      <p class="hint">
+        One-time step. Create a <b>Web application</b> OAuth client in Google Cloud Console and add
+        <code id="originHint">this origin</code> as an authorised JavaScript origin.
+        <a href="#" id="setupHelpToggle">Show me how</a>
+      </p>
+      <ol class="help hidden" id="setupHelp">
+        <li>Open <a href="https://console.cloud.google.com/projectcreate" target="_blank" rel="noopener">Google Cloud Console</a> and create (or pick) a project.</li>
+        <li>APIs &amp; Services &rarr; Library &rarr; enable <b>Google Calendar API</b>.</li>
+        <li>APIs &amp; Services &rarr; OAuth consent screen &rarr; External &rarr; fill the basics &rarr; add your own email under <b>Test users</b>.</li>
+        <li>Credentials &rarr; Create credentials &rarr; <b>OAuth client ID</b> &rarr; type <b>Web application</b>.</li>
+        <li>Under <b>Authorised JavaScript origins</b> add <code id="originHint2">this origin</code>. Leave redirect URIs empty.</li>
+        <li>Copy the Client ID into the box above. Nothing leaves your browser &mdash; it is stored in localStorage.</li>
+      </ol>
+    </section>
+
+    <section class="panel">
+      <h2>2 &middot; Sheet header</h2>
+      <label class="field"><span>Name</span><input type="text" id="empName" placeholder="Jane Doe"></label>
+      <label class="field"><span>Position</span><input type="text" id="empPosition" placeholder="Software Engineer"></label>
+      <div class="field-row">
+        <label class="field"><span>Month</span>
+          <select id="selMonth"></select>
+        </label>
+        <label class="field"><span>Year</span>
+          <input type="number" id="selYear" min="1970" max="2999" step="1">
+        </label>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>3 &middot; Calendars</h2>
+      <div id="calList" class="cal-list"><p class="muted">Connect your account to list calendars.</p></div>
+    </section>
+
+    <section class="panel">
+      <h2>4 &middot; Options</h2>
+
+      <label class="field"><span>One row per</span>
+        <select id="optGrouping">
+          <option value="event">Event</option>
+          <option value="day">Day (merge events)</option>
+        </select>
+      </label>
+
+      <label class="field"><span>Date column format</span>
+        <select id="optDateFmt">
+          <option value="dmy">01/06/2026</option>
+          <option value="d">1</option>
+          <option value="dmon">1-Jun</option>
+          <option value="ymd">2026-06-01</option>
+        </select>
+      </label>
+
+      <div class="field-row">
+        <label class="field"><span>Time format</span>
+          <select id="optTimeFmt">
+            <option value="24">24-hour</option>
+            <option value="12">12-hour</option>
+          </select>
+        </label>
+        <label class="field"><span>Round hours</span>
+          <select id="optRound">
+            <option value="0">Exact</option>
+            <option value="0.25">0.25 h</option>
+            <option value="0.5">0.5 h</option>
+            <option value="1">1 h</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="field-row">
+        <label class="field"><span>Break deduction (min)</span>
+          <input type="number" id="optBreak" min="0" max="480" step="5" value="0">
+        </label>
+        <label class="field"><span>All-day hours</span>
+          <input type="number" id="optAllDayHours" min="0" max="24" step="0.5" value="8">
+        </label>
+      </div>
+
+      <label class="check"><input type="checkbox" id="optAllDay"> Include all-day events</label>
+      <label class="check"><input type="checkbox" id="optDeclined"> Include events I declined</label>
+      <label class="check"><input type="checkbox" id="optWeekends" checked> Include weekend events</label>
+      <label class="check"><input type="checkbox" id="optEmptyDays"> Add a blank row for every day with no events</label>
+      <label class="check"><input type="checkbox" id="optDescDetail"> Append event location / notes to description</label>
+      <label class="check"><input type="checkbox" id="optTotal" checked> Add a TOTAL row at the end</label>
+
+      <label class="field"><span>Exclude if title contains</span>
+        <input type="text" id="optExclude" placeholder="lunch, standup, OOO" spellcheck="false">
+      </label>
+      <label class="field"><span>Only if title contains</span>
+        <input type="text" id="optInclude" placeholder="leave empty for all" spellcheck="false">
+      </label>
+
+      <label class="field"><span>Rows per printed page</span>
+        <input type="number" id="optRowsPerPage" min="10" max="60" step="1" value="21">
+      </label>
+    </section>
+
+    <section class="panel">
+      <h2>5 &middot; Generate</h2>
+      <button id="btnGenerate" class="btn btn-primary btn-block">Generate timesheet</button>
+      <div class="btn-row">
+        <button id="btnPrint" class="btn btn-block" disabled>Print / Save PDF</button>
+        <button id="btnCsv" class="btn btn-block" disabled>Export CSV</button>
+      </div>
+      <p class="hint">The preview is editable &mdash; click any cell to fix wording or fill in <b>VERIFIED BY</b> before printing.</p>
+    </section>
+
+    <p class="foot">Read-only calendar access. Data stays in this browser.</p>
+  </aside>
+
+  <!-- ─────────────── PREVIEW ─────────────── -->
+  <section class="preview">
+    <div class="preview-bar no-print">
+      <span id="summaryLine" class="muted">No timesheet generated yet.</span>
+      <label class="zoom">Zoom
+        <input type="range" id="zoom" min="50" max="140" value="100">
+      </label>
+    </div>
+    <div class="paper-scroll">
+      <div id="sheets" class="sheets"></div>
+    </div>
+  </section>
+
+</main>
+
+<div id="toast" class="toast hidden"></div>
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="app.js"></script>
+</body>
+</html>

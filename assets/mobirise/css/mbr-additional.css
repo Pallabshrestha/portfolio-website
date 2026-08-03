@@ -1447,6 +1447,34 @@ a {
 .cid-uiNsannTJc .content-head {
   max-width: 800px;
 }
+/* ---- Web apps tiles: 4 per row on desktop ---- */
+/* The card art is 703x527. A fixed 300px-tall band would crop it badly once the
+   column narrows to a quarter width, so let the image keep its own ratio instead. */
+.cid-uiNsannTJc .item-img {
+  height: auto;
+}
+.cid-uiNsannTJc .item-img > a {
+  display: block;
+}
+.cid-uiNsannTJc img {
+  height: auto;
+  aspect-ratio: 703 / 527;
+}
+@media (min-width: 992px) {
+  .cid-uiNsannTJc .item-content {
+    padding: 0 1.25rem 1.5rem;
+    margin-top: 1.25rem;
+  }
+  .cid-uiNsannTJc .item-title.display-5 {
+    font-size: 1.35rem;
+  }
+  .cid-uiNsannTJc .item-content .mbr-text.display-7 {
+    font-size: 1rem;
+  }
+  .cid-uiNsannTJc .item .mbr-section-btn .btn.display-4 {
+    font-size: 1rem;
+  }
+}
 .cid-uiNtsHWCtO {
   padding-top: 4rem;
   padding-bottom: 4rem;

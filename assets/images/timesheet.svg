@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 703 527" width="703" height="527" role="img" aria-label="Calendar Timesheet">
+  <defs>
+    <!-- Site palette: #2b7a69 primary, #a0e2e1 / #c7eeed light accents -->
+    <linearGradient id="tsBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1d5449"/>
+      <stop offset="0.55" stop-color="#2b7a69"/>
+      <stop offset="1" stop-color="#3a9584"/>
+    </linearGradient>
+    <linearGradient id="tsBadge" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#a0e2e1"/>
+      <stop offset="1" stop-color="#c7eeed"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="703" height="527" fill="url(#tsBg)"/>
+
+  <!-- Timesheet grid, faint so the text stays readable -->
+  <g stroke="#c7eeed" stroke-opacity="0.22" stroke-width="3" fill="none">
+    <line x1="0" y1="31" x2="703" y2="31"/>
+    <line x1="0" y1="93" x2="703" y2="93"/>
+    <line x1="0" y1="155" x2="703" y2="155"/>
+    <line x1="0" y1="217" x2="703" y2="217"/>
+    <line x1="0" y1="279" x2="703" y2="279"/>
+    <line x1="0" y1="341" x2="703" y2="341"/>
+    <line x1="0" y1="403" x2="703" y2="403"/>
+    <line x1="0" y1="465" x2="703" y2="465"/>
+    <line x1="120" y1="0" x2="120" y2="527"/>
+    <line x1="250" y1="0" x2="250" y2="527"/>
+    <line x1="604" y1="0" x2="604" y2="527"/>
+  </g>
+
+  <!-- App mark -->
+  <rect x="60" y="150" width="96" height="96" rx="22" fill="url(#tsBadge)"/>
+  <text x="108" y="215" text-anchor="middle" font-family="'Archivo Narrow', Arial, Helvetica, sans-serif"
+        font-size="46" font-weight="700" fill="#1d5449">TS</text>
+
+  <text x="60" y="312" font-family="'Archivo Narrow', Arial, Helvetica, sans-serif" font-size="54"
+        font-weight="700" fill="#ffffff">Calendar Timesheet</text>
+  <text x="60" y="354" font-family="'Archivo Narrow', Arial, Helvetica, sans-serif" font-size="25"
+        fill="#c7eeed">Google Calendar into a printable monthly sheet</text>
+
+  <!-- Feature chips -->
+  <g font-family="'Archivo Narrow', Arial, Helvetica, sans-serif" font-size="19" fill="#ffffff">
+    <rect x="60" y="394" width="168" height="42" rx="21" fill="#c7eeed" fill-opacity="0.18"/>
+    <text x="144" y="421" text-anchor="middle">Reads events</text>
+
+    <rect x="240" y="394" width="177" height="42" rx="21" fill="#c7eeed" fill-opacity="0.18"/>
+    <text x="328" y="421" text-anchor="middle">Editable rows</text>
+
+    <rect x="429" y="394" width="168" height="42" rx="21" fill="#c7eeed" fill-opacity="0.18"/>
+    <text x="513" y="421" text-anchor="middle">Print or CSV</text>
+  </g>
+</svg>
