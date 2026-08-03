@@ -1447,16 +1447,58 @@ a {
 .cid-uiNsannTJc .content-head {
   max-width: 800px;
 }
+/* ---- Web apps header band ---- */
+/* Mirrors the home page hero so the two pages read as one site: same grey
+   geometric image, same dark overlay, white centred type. Shorter than the
+   home hero because this page is a listing, not a landing. */
+.cid-webapps-hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding-top: 9rem;
+  padding-bottom: 5rem;
+  background-image: url("../../../assets/images/nvf5asigjxogydh8vf-2.webp");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+.cid-webapps-hero .mbr-overlay {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background-color: #232323;
+  opacity: 0.55;
+}
+.cid-webapps-hero .container {
+  position: relative;
+  z-index: 1;
+}
+.cid-webapps-hero .mbr-section-title,
+.cid-webapps-hero .mbr-text {
+  text-align: center;
+}
+@media (max-width: 767px) {
+  .cid-webapps-hero {
+    padding-top: 7rem;
+    padding-bottom: 3.5rem;
+  }
+}
+
 /* ---- Web apps tiles: 4 per row on desktop ---- */
+/* Scoped to #features04-1v (the Web apps page) on purpose. The home page
+   showcase shares the .cid-uiNsannTJc class but holds photos of other shapes,
+   so these rules must not reach it. */
 /* The card art is 703x527. A fixed 300px-tall band would crop it badly once the
    column narrows to a quarter width, so let the image keep its own ratio instead. */
-.cid-uiNsannTJc .item-img {
+#features04-1v .item-img {
   height: auto;
 }
-.cid-uiNsannTJc .item-img > a {
+#features04-1v .item-img > a {
   display: block;
 }
-.cid-uiNsannTJc img {
+#features04-1v img {
   height: auto;
   aspect-ratio: 703 / 527;
   /* contain, never cover: the tile art must never be cropped. The box already
@@ -1465,17 +1507,17 @@ a {
   object-fit: contain;
 }
 @media (min-width: 992px) {
-  .cid-uiNsannTJc .item-content {
+  #features04-1v .item-content {
     padding: 0 1.25rem 1.5rem;
     margin-top: 1.25rem;
   }
-  .cid-uiNsannTJc .item-title.display-5 {
+  #features04-1v .item-title.display-5 {
     font-size: 1.35rem;
   }
-  .cid-uiNsannTJc .item-content .mbr-text.display-7 {
+  #features04-1v .item-content .mbr-text.display-7 {
     font-size: 1rem;
   }
-  .cid-uiNsannTJc .item .mbr-section-btn .btn.display-4 {
+  #features04-1v .mbr-section-btn .btn.display-4 {
     font-size: 1rem;
   }
 }

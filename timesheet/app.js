@@ -145,10 +145,22 @@ function setAuthUI(connected) {
   $('btnSignOut').classList.toggle('hidden', !connected);
 }
 
+/** Show or hide the settings panel. Pass a boolean to force a state. */
+function toggleSettings(force) {
+  const panel = $('settingsPanel');
+  const open  = force === undefined ? panel.classList.contains('hidden') : force;
+  panel.classList.toggle('hidden', !open);
+  $('btnSettings').setAttribute('aria-expanded', String(open));
+  return open;
+}
+
 function connect() {
   const clientId = $('clientId').value.trim();
   if (!clientId) {
-    toast('Paste your Google OAuth Client ID first (step 1).', true);
+    // The field lives in settings, which is hidden by default — open it,
+    // otherwise the message points at something the user cannot see.
+    toggleSettings(true);
+    toast('Add your Google OAuth Client ID in Settings first.', true);
     $('clientId').focus();
     return;
   }
@@ -659,6 +671,7 @@ function init() {
   $('btnGenerate').addEventListener('click', generate);
   $('btnCsv').addEventListener('click', exportCsv);
   $('btnPrint').addEventListener('click', () => window.print());
+  $('btnSettings').addEventListener('click', () => toggleSettings());
 
   $('setupHelpToggle').addEventListener('click', (e) => {
     e.preventDefault();

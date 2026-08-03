@@ -5,22 +5,32 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Calendar Timesheet</title>
 <link rel="stylesheet" href="styles.css">
+<link rel="preload" href="https://fonts.googleapis.com/css?family=Inter+Tight:300,400,500,600,700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter+Tight:300,400,500,600,700&display=swap"></noscript>
+<link rel="preload" href="https://fonts.googleapis.com/css?family=Archivo+Narrow:400,500,600,700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Archivo+Narrow:400,500,600,700&display=swap"></noscript>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗓️</text></svg>">
 </head>
 <body>
 
 <header class="topbar no-print">
-  <div class="brand">
-    <span class="brand-mark">TS</span>
-    <div>
-      <h1>Calendar Timesheet</h1>
-      <p>Google Calendar &rarr; monthly timesheet</p>
+  <div class="topbar-inner">
+    <a class="back-link" href="../web-apps.html">&larr; Web apps</a>
+    <div class="brand">
+      <span class="brand-mark">TS</span>
+      <div>
+        <h1>Calendar Timesheet</h1>
+        <p>Google Calendar &rarr; printable monthly sheet</p>
+      </div>
     </div>
-  </div>
-  <div class="topbar-actions">
-    <span id="authStatus" class="status status-off">Not connected</span>
-    <button id="btnConnect" class="btn btn-primary">Connect Google Calendar</button>
-    <button id="btnSignOut" class="btn btn-ghost hidden">Sign out</button>
+    <div class="topbar-actions">
+      <span id="authStatus" class="status status-off">Not connected</span>
+      <button id="btnConnect" class="btn btn-primary">Connect Google Calendar</button>
+      <button id="btnSignOut" class="btn btn-ghost hidden">Sign out</button>
+      <button id="btnSettings" class="btn btn-icon" aria-expanded="false" aria-controls="settingsPanel" title="Settings">
+        <span aria-hidden="true">&#9881;</span><span class="sr-only">Settings</span>
+      </button>
+    </div>
   </div>
 </header>
 
@@ -29,8 +39,9 @@
   <!-- ─────────────── SIDEBAR ─────────────── -->
   <aside class="sidebar no-print">
 
-    <section class="panel" id="setupPanel">
-      <h2>1 &middot; Google setup</h2>
+    <!-- Google setup lives here, hidden until the gear in the top bar is clicked. -->
+    <section class="panel panel-settings hidden" id="settingsPanel">
+      <h2>Settings &middot; Google access</h2>
       <label class="field">
         <span>OAuth Client ID</span>
         <input type="text" id="clientId" placeholder="xxxxxxxx.apps.googleusercontent.com" spellcheck="false">
@@ -51,9 +62,9 @@
     </section>
 
     <section class="panel">
-      <h2>2 &middot; Sheet header</h2>
-      <label class="field"><span>Name</span><input type="text" id="empName" placeholder="Jane Doe"></label>
-      <label class="field"><span>Position</span><input type="text" id="empPosition" placeholder="Software Engineer"></label>
+      <h2>1 &middot; Sheet header</h2>
+      <label class="field"><span>Name</span><input type="text" id="empName" placeholder="Pallab Shrestha"></label>
+      <label class="field"><span>Position</span><input type="text" id="empPosition" placeholder="Technical Lead"></label>
       <div class="field-row">
         <label class="field"><span>Month</span>
           <select id="selMonth"></select>
@@ -65,12 +76,12 @@
     </section>
 
     <section class="panel">
-      <h2>3 &middot; Calendars</h2>
+      <h2>2 &middot; Calendars</h2>
       <div id="calList" class="cal-list"><p class="muted">Connect your account to list calendars.</p></div>
     </section>
 
     <section class="panel">
-      <h2>4 &middot; Options</h2>
+      <h2>3 &middot; Options</h2>
 
       <label class="field"><span>One row per</span>
         <select id="optGrouping">
@@ -134,7 +145,7 @@
     </section>
 
     <section class="panel">
-      <h2>5 &middot; Generate</h2>
+      <h2>4 &middot; Generate</h2>
       <button id="btnGenerate" class="btn btn-primary btn-block">Generate timesheet</button>
       <div class="btn-row">
         <button id="btnPrint" class="btn btn-block" disabled>Print / Save PDF</button>
