@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 703 527" width="703" height="527" role="img" aria-label="Footy Manager">
+  <defs>
+    <!-- Site palette: #2b7a69 primary, #a0e2e1 / #c7eeed light accents -->
+    <linearGradient id="fmBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1d5449"/>
+      <stop offset="0.55" stop-color="#2b7a69"/>
+      <stop offset="1" stop-color="#3a9584"/>
+    </linearGradient>
+    <linearGradient id="fmBadge" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#a0e2e1"/>
+      <stop offset="1" stop-color="#c7eeed"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="703" height="527" fill="url(#fmBg)"/>
+
+  <!-- Pitch markings, faint so the text stays readable -->
+  <g stroke="#c7eeed" stroke-opacity="0.22" stroke-width="3" fill="none">
+    <line x1="351.5" y1="0" x2="351.5" y2="527"/>
+    <circle cx="351.5" cy="263.5" r="86"/>
+    <rect x="0" y="163" width="86" height="201"/>
+    <rect x="617" y="163" width="86" height="201"/>
+  </g>
+
+  <!-- App mark -->
+  <rect x="60" y="150" width="96" height="96" rx="22" fill="url(#fmBadge)"/>
+  <text x="108" y="215" text-anchor="middle" font-family="'Archivo Narrow', Arial, Helvetica, sans-serif"
+        font-size="56" font-weight="700" fill="#1d5449">F</text>
+
+  <text x="60" y="312" font-family="'Archivo Narrow', Arial, Helvetica, sans-serif" font-size="54"
+        font-weight="700" fill="#ffffff">Footy Manager</text>
+  <text x="60" y="354" font-family="'Archivo Narrow', Arial, Helvetica, sans-serif" font-size="25"
+        fill="#c7eeed">Match voting, squad caps &amp; cost splitting</text>
+
+  <!-- Feature chips -->
+  <g font-family="'Archivo Narrow', Arial, Helvetica, sans-serif" font-size="19" fill="#ffffff">
+    <rect x="60" y="394" width="150" height="42" rx="21" fill="#c7eeed" fill-opacity="0.18"/>
+    <text x="135" y="421" text-anchor="middle">Who is in</text>
+
+    <rect x="222" y="394" width="168" height="42" rx="21" fill="#c7eeed" fill-opacity="0.18"/>
+    <text x="306" y="421" text-anchor="middle">Seats capped</text>
+
+    <rect x="402" y="394" width="196" height="42" rx="21" fill="#c7eeed" fill-opacity="0.18"/>
+    <text x="500" y="421" text-anchor="middle">Split in rupees</text>
+  </g>
+</svg>
