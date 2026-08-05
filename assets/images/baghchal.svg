@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 703 527" width="703" height="527" role="img" aria-label="Bagh Chal - Tigers and Goats">
+  <defs>
+    <!-- Slate slab, matching the board inside the game -->
+    <linearGradient id="bcSlate" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4e5a64"/>
+      <stop offset="0.45" stop-color="#38424b"/>
+      <stop offset="1" stop-color="#212830"/>
+    </linearGradient>
+    <linearGradient id="bcBadge" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffe2a1"/>
+      <stop offset="1" stop-color="#e0921f"/>
+    </linearGradient>
+    <radialGradient id="bcSocket" cx="62%" cy="66%" r="72%">
+      <stop offset="0" stop-color="#66727d"/>
+      <stop offset="1" stop-color="#141a1f"/>
+    </radialGradient>
+    <filter id="bcGrain" x="0%" y="0%" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="1.5" numOctaves="5" seed="11" stitchTiles="stitch"/>
+      <feColorMatrix type="saturate" values="0"/>
+    </filter>
+  </defs>
+
+  <rect width="703" height="527" fill="url(#bcSlate)"/>
+  <rect width="703" height="527" filter="url(#bcGrain)" opacity="0.26" style="mix-blend-mode:overlay"/>
+
+  <!-- slate veining -->
+  <g stroke="#9daab6" stroke-opacity="0.12" fill="none" stroke-linecap="round">
+    <path d="M0,120 Q180,96 330,142 T703,104" stroke-width="3"/>
+    <path d="M0,392 Q210,440 400,398 T703,438" stroke-width="2.4"/>
+  </g>
+
+  <!-- the board, engraved on the right -->
+  <g transform="translate(430,124)">
+    <g fill="none" stroke="#11161a" stroke-opacity="0.72" stroke-width="7" stroke-linecap="round">
+      <path d="M0,0 H280 M0,70 H280 M0,140 H280 M0,210 H280 M0,280 H280"/>
+      <path d="M0,0 V280 M70,0 V280 M140,0 V280 M210,0 V280 M280,0 V280"/>
+      <path d="M0,0 L280,280 M280,0 L0,280"/>
+      <path d="M140,0 L280,140 L140,280 L0,140 Z"/>
+    </g>
+    <g fill="none" stroke="#93a1ad" stroke-opacity="0.26" stroke-width="2.4" stroke-linecap="round"
+       transform="translate(2.5,2.5)">
+      <path d="M0,0 H280 M0,70 H280 M0,140 H280 M0,210 H280 M0,280 H280"/>
+      <path d="M0,0 V280 M70,0 V280 M140,0 V280 M210,0 V280 M280,0 V280"/>
+      <path d="M0,0 L280,280 M280,0 L0,280"/>
+      <path d="M140,0 L280,140 L140,280 L0,140 Z"/>
+    </g>
+    <!-- carved sockets -->
+    <g>
+      <circle cx="0" cy="0" r="13" fill="url(#bcSocket)"/><circle cx="70" cy="0" r="13" fill="url(#bcSocket)"/>
+      <circle cx="140" cy="0" r="13" fill="url(#bcSocket)"/><circle cx="210" cy="0" r="13" fill="url(#bcSocket)"/>
+      <circle cx="280" cy="0" r="13" fill="url(#bcSocket)"/>
+      <circle cx="0" cy="70" r="13" fill="url(#bcSocket)"/><circle cx="70" cy="70" r="13" fill="url(#bcSocket)"/>
+      <circle cx="140" cy="70" r="13" fill="url(#bcSocket)"/><circle cx="210" cy="70" r="13" fill="url(#bcSocket)"/>
+      <circle cx="280" cy="70" r="13" fill="url(#bcSocket)"/>
+      <circle cx="0" cy="140" r="13" fill="url(#bcSocket)"/><circle cx="70" cy="140" r="13" fill="url(#bcSocket)"/>
+      <circle cx="140" cy="140" r="13" fill="url(#bcSocket)"/><circle cx="210" cy="140" r="13" fill="url(#bcSocket)"/>
+      <circle cx="280" cy="140" r="13" fill="url(#bcSocket)"/>
+      <circle cx="0" cy="210" r="13" fill="url(#bcSocket)"/><circle cx="70" cy="210" r="13" fill="url(#bcSocket)"/>
+      <circle cx="140" cy="210" r="13" fill="url(#bcSocket)"/><circle cx="210" cy="210" r="13" fill="url(#bcSocket)"/>
+      <circle cx="280" cy="210" r="13" fill="url(#bcSocket)"/>
+      <circle cx="0" cy="280" r="13" fill="url(#bcSocket)"/><circle cx="70" cy="280" r="13" fill="url(#bcSocket)"/>
+      <circle cx="140" cy="280" r="13" fill="url(#bcSocket)"/><circle cx="210" cy="280" r="13" fill="url(#bcSocket)"/>
+      <circle cx="280" cy="280" r="13" fill="url(#bcSocket)"/>
+    </g>
+    <!-- a tiger in the corner, a goat caught in the middle -->
+    <g transform="translate(0,0) scale(2.6)">
+      <path d="M0,-6.1 L-3.0,-4.9 L-5.4,-7.6 L-6.5,-3.0 L-7.2,0.3 L-6.0,3.5 L-3.2,5.5 L0,6.6
+               L3.2,5.5 L6.0,3.5 L7.2,0.3 L6.5,-3.0 L5.4,-7.6 L3.0,-4.9 Z"
+            fill="url(#bcBadge)" stroke="#6b3c06" stroke-width="0.5" stroke-linejoin="round"/>
+      <path d="M-4.7,-1.4 L-2.4,-0.9 L-3.4,0.7 Z" fill="#3d2103"/>
+      <path d="M4.7,-1.4 L2.4,-0.9 L3.4,0.7 Z" fill="#3d2103"/>
+      <path d="M-1.15,2.3 L1.15,2.3 L0,3.6 Z" fill="#5e3205"/>
+    </g>
+    <g transform="translate(140,140) scale(2.6)">
+      <path d="M-2.5,-4.5 Q-5.6,-5.7 -6.8,-7.6 L-5.2,-8.0 Q-4.4,-6.1 -1.7,-5.3 Z" fill="#e8eff6"/>
+      <path d="M2.5,-4.5 Q5.6,-5.7 6.8,-7.6 L5.2,-8.0 Q4.4,-6.1 1.7,-5.3 Z" fill="#e8eff6"/>
+      <path d="M0,-5.5 L-2.7,-4.7 L-3.9,-1.6 L-4.3,1.5 L-3.1,4.7 L0,6.5
+               L3.1,4.7 L4.3,1.5 L3.9,-1.6 L2.7,-4.7 Z"
+            fill="#eef3f8" stroke="#6f8095" stroke-width="0.5" stroke-linejoin="round"/>
+      <ellipse cx="-2.75" cy="-0.5" rx="1.15" ry="0.85" fill="#fff" stroke="#54637a" stroke-width="0.28"/>
+      <ellipse cx="2.75" cy="-0.5" rx="1.15" ry="0.85" fill="#fff" stroke="#54637a" stroke-width="0.28"/>
+      <rect x="-3.55" y="-0.78" width="1.6" height="0.56" rx="0.26" fill="#2b3543"/>
+      <rect x="1.95" y="-0.78" width="1.6" height="0.56" rx="0.26" fill="#2b3543"/>
+    </g>
+  </g>
+
+  <!-- App mark -->
+  <rect x="60" y="150" width="96" height="96" rx="22" fill="url(#bcBadge)"/>
+  <text x="108" y="215" text-anchor="middle" font-family="'Archivo Narrow', Arial, Helvetica, sans-serif"
+        font-size="46" font-weight="700" fill="#5e3205">BC</text>
+
+  <text x="60" y="312" font-family="'Archivo Narrow', Arial, Helvetica, sans-serif" font-size="54"
+        font-weight="700" fill="#ffffff">Bagh Chal</text>
+  <text x="60" y="354" font-family="'Archivo Narrow', Arial, Helvetica, sans-serif" font-size="25"
+        fill="#c3d0dc">Tigers and goats, the old game of Nepal</text>
+
+  <!-- Feature chips -->
+  <g font-family="'Archivo Narrow', Arial, Helvetica, sans-serif" font-size="19" fill="#ffffff">
+    <rect x="60" y="394" width="150" height="42" rx="21" fill="#c3d0dc" fill-opacity="0.16"/>
+    <text x="135" y="421" text-anchor="middle">Two players</text>
+
+    <rect x="222" y="394" width="168" height="42" rx="21" fill="#c3d0dc" fill-opacity="0.16"/>
+    <text x="306" y="421" text-anchor="middle">Play the computer</text>
+  </g>
+</svg>

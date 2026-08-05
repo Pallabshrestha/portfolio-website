@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bagh Chal - Tigers and Goats</title>
+<meta name="description" content="Bagh Chal, the Nepali board game of tigers and goats. Four tigers hunt, twenty goats surround. Play in your browser against the computer or a friend.">
+<!-- ?v= is a cache-busting token. GitHub Pages serves css/js with a 4 hour
+     max-age, so without it a deploy does not reach anyone who has already
+     visited. Bump it whenever styles.css or app.js changes. -->
+<link rel="stylesheet" href="styles.css?v=1">
+<link rel="preload" href="https://fonts.googleapis.com/css?family=Inter+Tight:300,400,500,600,700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter+Tight:300,400,500,600,700&display=swap"></noscript>
+<link rel="preload" href="https://fonts.googleapis.com/css?family=Archivo+Narrow:400,500,600,700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Archivo+Narrow:400,500,600,700&display=swap"></noscript>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐅</text></svg>">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="back-link" href="../web-apps.html">&larr; Web apps</a>
+    <div class="brand">
+      <span class="brand-mark">BC</span>
+      <div>
+        <h1>Bagh Chal</h1>
+        <p>Four tigers hunt, twenty goats surround</p>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <button id="btnNew" class="btn btn-ghost">New game</button>
+    </div>
+  </div>
+</header>
+
+<main class="layout">
+
+  <!-- ─────────────── BOARD ─────────────── -->
+  <section class="board-card">
+
+    <div class="turn-bar">
+      <span id="turnDot" class="turn-dot"></span>
+      <div>
+        <div id="turnText" class="turn-text">Goats to place</div>
+        <div id="turnSub" class="turn-sub">Click any empty point to put a goat down.</div>
+      </div>
+      <span id="thinking" class="thinking hidden">Thinking</span>
+    </div>
+
+    <div class="board-wrap">
+      <svg id="board" class="board" viewBox="0 0 100 100" role="application"
+           aria-label="Bagh Chal board, 5 by 5 points">
+        <defs>
+          <!-- ── slate ───────────────────────────────────────── -->
+          <linearGradient id="slate" x1="0.1" y1="0" x2="0.9" y2="1">
+            <stop offset="0" stop-color="#4e5a64"/>
+            <stop offset="0.42" stop-color="#3a444d"/>
+            <stop offset="0.75" stop-color="#2c343b"/>
+            <stop offset="1" stop-color="#222930"/>
+          </linearGradient>
+          <linearGradient id="slateRim" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#78848f"/>
+            <stop offset="0.5" stop-color="#39424a"/>
+            <stop offset="1" stop-color="#151a1e"/>
+          </linearGradient>
+          <!-- Fine mineral speckle. Multiplied over the slate so the stone
+               reads as rough rather than as flat grey. -->
+          <filter id="grain" x="0%" y="0%" width="100%" height="100%">
+            <feTurbulence type="fractalNoise" baseFrequency="1.7" numOctaves="5"
+                          seed="11" stitchTiles="stitch"/>
+            <feColorMatrix type="saturate" values="0"/>
+          </filter>
+          <!-- Broader cloudy mottling, the blotchy variation real slate has. -->
+          <filter id="mottle" x="0%" y="0%" width="100%" height="100%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="4"
+                          seed="3" stitchTiles="stitch"/>
+            <feColorMatrix type="saturate" values="0"/>
+          </filter>
+          <!-- A carved socket is lit from the BOTTOM right: that inversion is
+               what makes the eye read a dent instead of a bump. -->
+          <radialGradient id="socket" cx="62%" cy="66%" r="72%">
+            <stop offset="0" stop-color="#66727d"/>
+            <stop offset="0.55" stop-color="#2a3138"/>
+            <stop offset="1" stop-color="#12171b"/>
+          </radialGradient>
+
+          <!-- ── amber crystal (tigers) ──────────────────────── -->
+          <linearGradient id="tgLight" x1="0.1" y1="0" x2="0.8" y2="1">
+            <stop offset="0" stop-color="#fff1cf"/><stop offset="1" stop-color="#f8c76e"/>
+          </linearGradient>
+          <linearGradient id="tgMid" x1="0" y1="0.1" x2="0.9" y2="1">
+            <stop offset="0" stop-color="#f6bd5c"/><stop offset="1" stop-color="#dd8f28"/>
+          </linearGradient>
+          <linearGradient id="tgDeep" x1="0.2" y1="0" x2="0.8" y2="1">
+            <stop offset="0" stop-color="#d98f2c"/><stop offset="1" stop-color="#a35d10"/>
+          </linearGradient>
+          <linearGradient id="tgShade" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#b06c16"/><stop offset="1" stop-color="#77420a"/>
+          </linearGradient>
+
+          <!-- ── pale quartz (goats) ─────────────────────────── -->
+          <linearGradient id="gtLight" x1="0.1" y1="0" x2="0.8" y2="1">
+            <stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#e4edf5"/>
+          </linearGradient>
+          <linearGradient id="gtMid" x1="0" y1="0.1" x2="0.9" y2="1">
+            <stop offset="0" stop-color="#e2ebf3"/><stop offset="1" stop-color="#bccadb"/>
+          </linearGradient>
+          <linearGradient id="gtDeep" x1="0.2" y1="0" x2="0.8" y2="1">
+            <stop offset="0" stop-color="#c0ccdb"/><stop offset="1" stop-color="#94a4b8"/>
+          </linearGradient>
+          <linearGradient id="gtShade" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#9dabbd"/><stop offset="1" stop-color="#6f8095"/>
+          </linearGradient>
+          <linearGradient id="gtHorn" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#f2f6fa"/><stop offset="1" stop-color="#a9b8c9"/>
+          </linearGradient>
+
+          <filter id="pieceShadow" x="-45%" y="-45%" width="190%" height="190%">
+            <feDropShadow dx="0" dy="0.85" stdDeviation="0.75"
+                          flood-color="#080c10" flood-opacity="0.62"/>
+          </filter>
+
+          <!-- ══ TIGER: faceted amber-crystal head ══ -->
+          <g id="tigerHead">
+            <ellipse cx="0" cy="6.6" rx="5.4" ry="1.3" fill="#0a0e12" opacity="0.34"/>
+            <g filter="url(#pieceShadow)">
+              <!-- silhouette: skull, two ears, tapering muzzle -->
+              <path d="M0,-6.1 L-3.0,-4.9 L-5.4,-7.6 L-6.5,-3.0 L-7.2,0.3 L-6.0,3.5
+                       L-3.2,5.5 L0,6.6 L3.2,5.5 L6.0,3.5 L7.2,0.3 L6.5,-3.0
+                       L5.4,-7.6 L3.0,-4.9 Z"
+                    fill="url(#tgMid)" stroke="#6b3c06" stroke-width="0.5"
+                    stroke-linejoin="round"/>
+              <!-- facets -->
+              <path d="M-5.4,-7.6 L-6.5,-3.0 L-3.0,-4.9 Z" fill="url(#tgDeep)"/>
+              <path d="M5.4,-7.6 L6.5,-3.0 L3.0,-4.9 Z" fill="url(#tgShade)"/>
+              <path d="M0,-6.1 L-3.0,-4.9 L-6.5,-3.0 L-2.7,-1.0 Z" fill="url(#tgLight)"/>
+              <path d="M0,-6.1 L3.0,-4.9 L6.5,-3.0 L2.7,-1.0 Z" fill="url(#tgMid)"/>
+              <path d="M-6.5,-3.0 L-7.2,0.3 L-6.0,3.5 L-2.9,1.5 L-2.7,-1.0 Z" fill="url(#tgDeep)"/>
+              <path d="M6.5,-3.0 L7.2,0.3 L6.0,3.5 L2.9,1.5 L2.7,-1.0 Z" fill="url(#tgShade)"/>
+              <path d="M0,-6.1 L-2.7,-1.0 L0,1.1 L2.7,-1.0 Z" fill="url(#tgLight)"/>
+              <!-- muzzle, the brightest plane -->
+              <path d="M-2.9,1.5 L2.9,1.5 L3.2,5.5 L0,6.6 L-3.2,5.5 Z" fill="url(#tgLight)"/>
+              <path d="M0,1.1 L2.9,1.5 L3.2,5.5 L0,6.6 Z" fill="url(#tgMid)" opacity="0.55"/>
+              <!-- stripes, cut as darker facets -->
+              <path d="M-4.6,-3.4 L-3.6,-3.9 L-2.9,-1.6 L-3.9,-1.2 Z" fill="#8a4f0c" opacity="0.5"/>
+              <path d="M4.6,-3.4 L3.6,-3.9 L2.9,-1.6 L3.9,-1.2 Z" fill="#8a4f0c" opacity="0.5"/>
+              <path d="M-6.2,0.4 L-5.0,0.0 L-4.4,2.0 L-5.6,2.4 Z" fill="#8a4f0c" opacity="0.42"/>
+              <path d="M6.2,0.4 L5.0,0.0 L4.4,2.0 L5.6,2.4 Z" fill="#8a4f0c" opacity="0.42"/>
+              <!-- eyes -->
+              <path d="M-4.7,-1.4 L-2.4,-0.9 L-3.4,0.7 Z" fill="#3d2103"/>
+              <path d="M4.7,-1.4 L2.4,-0.9 L3.4,0.7 Z" fill="#3d2103"/>
+              <circle cx="-3.6" cy="-0.6" r="0.42" fill="#fff6e2" opacity="0.9"/>
+              <circle cx="3.6" cy="-0.6" r="0.42" fill="#fff6e2" opacity="0.9"/>
+              <!-- nose and mouth -->
+              <path d="M-1.15,2.3 L1.15,2.3 L0,3.6 Z" fill="#5e3205"/>
+              <path d="M0,3.6 L0,4.5 M0,4.5 Q-1.2,5.2 -1.9,4.4 M0,4.5 Q1.2,5.2 1.9,4.4"
+                    stroke="#5e3205" stroke-width="0.42" fill="none" stroke-linecap="round"/>
+              <!-- specular sparkle -->
+              <path d="M-1.9,-4.6 L-0.3,-5.3 L-0.9,-3.2 Z" fill="#fffdf6" opacity="0.72"/>
+            </g>
+          </g>
+
+          <!-- ══ GOAT: faceted quartz head with swept horns ══ -->
+          <g id="goatHead">
+            <ellipse cx="0" cy="6.6" rx="4.8" ry="1.2" fill="#0a0e12" opacity="0.34"/>
+            <g filter="url(#pieceShadow)">
+              <!-- horns, swept back over the skull -->
+              <path d="M-2.5,-4.5 Q-5.6,-5.7 -6.8,-7.6 L-5.2,-8.0 Q-4.4,-6.1 -1.7,-5.3 Z"
+                    fill="url(#gtHorn)" stroke="#6f8095" stroke-width="0.4" stroke-linejoin="round"/>
+              <path d="M2.5,-4.5 Q5.6,-5.7 6.8,-7.6 L5.2,-8.0 Q4.4,-6.1 1.7,-5.3 Z"
+                    fill="url(#gtHorn)" stroke="#6f8095" stroke-width="0.4" stroke-linejoin="round"/>
+              <!-- ears, out to the sides -->
+              <path d="M-3.6,-2.5 L-7.0,-1.5 L-6.4,0.5 L-3.4,-0.4 Z"
+                    fill="url(#gtDeep)" stroke="#6f8095" stroke-width="0.4" stroke-linejoin="round"/>
+              <path d="M3.6,-2.5 L7.0,-1.5 L6.4,0.5 L3.4,-0.4 Z"
+                    fill="url(#gtShade)" stroke="#6f8095" stroke-width="0.4" stroke-linejoin="round"/>
+              <!-- face silhouette, narrower and longer than the tiger -->
+              <path d="M0,-5.5 L-2.7,-4.7 L-3.9,-1.6 L-4.3,1.5 L-3.1,4.7 L0,6.5
+                       L3.1,4.7 L4.3,1.5 L3.9,-1.6 L2.7,-4.7 Z"
+                    fill="url(#gtMid)" stroke="#6f8095" stroke-width="0.5" stroke-linejoin="round"/>
+              <!-- facets -->
+              <path d="M0,-5.5 L-2.7,-4.7 L-3.9,-1.6 L0,-0.6 Z" fill="url(#gtLight)"/>
+              <path d="M0,-5.5 L2.7,-4.7 L3.9,-1.6 L0,-0.6 Z" fill="url(#gtMid)"/>
+              <path d="M-3.9,-1.6 L-4.3,1.5 L-2.2,2.2 L0,-0.6 Z" fill="url(#gtDeep)"/>
+              <path d="M3.9,-1.6 L4.3,1.5 L2.2,2.2 L0,-0.6 Z" fill="url(#gtShade)"/>
+              <!-- muzzle, brightest plane -->
+              <path d="M-2.2,2.2 L2.2,2.2 L3.1,4.7 L0,6.5 L-3.1,4.7 Z" fill="url(#gtLight)"/>
+              <path d="M0,2.2 L2.2,2.2 L3.1,4.7 L0,6.5 Z" fill="url(#gtMid)" opacity="0.5"/>
+              <!-- eyes: goats have a horizontal slot pupil -->
+              <ellipse cx="-2.75" cy="-0.5" rx="1.15" ry="0.85" fill="#f4f8fc"
+                       stroke="#54637a" stroke-width="0.28"/>
+              <ellipse cx="2.75" cy="-0.5" rx="1.15" ry="0.85" fill="#f4f8fc"
+                       stroke="#54637a" stroke-width="0.28"/>
+              <rect x="-3.55" y="-0.78" width="1.6" height="0.56" rx="0.26" fill="#2b3543"/>
+              <rect x="1.95" y="-0.78" width="1.6" height="0.56" rx="0.26" fill="#2b3543"/>
+              <!-- nostrils -->
+              <ellipse cx="-0.85" cy="3.7" rx="0.42" ry="0.6" fill="#5b6a7e"/>
+              <ellipse cx="0.85" cy="3.7" rx="0.42" ry="0.6" fill="#5b6a7e"/>
+              <!-- beard tuft -->
+              <path d="M-1.0,6.2 L0,8.1 L1.0,6.2 Z" fill="url(#gtDeep)"
+                    stroke="#6f8095" stroke-width="0.3" stroke-linejoin="round"/>
+              <!-- specular sparkle -->
+              <path d="M-1.7,-4.0 L-0.4,-4.6 L-0.9,-2.6 Z" fill="#ffffff" opacity="0.8"/>
+            </g>
+          </g>
+        </defs>
+
+        <!-- carved slate slab -->
+        <rect x="1" y="1" width="98" height="98" rx="5" fill="url(#slateRim)"/>
+        <rect x="2.6" y="2.6" width="94.8" height="94.8" rx="4" fill="url(#slate)"/>
+        <rect x="2.6" y="2.6" width="94.8" height="94.8" rx="4" filter="url(#mottle)"
+              opacity="0.22" style="mix-blend-mode:overlay"/>
+        <rect x="2.6" y="2.6" width="94.8" height="94.8" rx="4" filter="url(#grain)"
+              opacity="0.3" style="mix-blend-mode:overlay"/>
+        <!-- veins -->
+        <g stroke="#9daab6" stroke-opacity="0.13" fill="none" stroke-linecap="round">
+          <path d="M6,22 Q28,17 47,26 T94,20" stroke-width="0.5"/>
+          <path d="M4,63 Q30,72 52,64 T96,71" stroke-width="0.4"/>
+          <path d="M14,4 Q20,34 12,58 T22,96" stroke-width="0.35"/>
+        </g>
+        <!-- chiselled inner rebate -->
+        <rect x="5.6" y="5.6" width="88.8" height="88.8" rx="2.5" fill="none"
+              stroke="#141a1f" stroke-width="0.7" stroke-opacity="0.7"/>
+        <rect x="6.0" y="6.0" width="88.8" height="88.8" rx="2.5" fill="none"
+              stroke="#8d9aa6" stroke-width="0.4" stroke-opacity="0.22"/>
+
+        <!-- filled by app.js -->
+        <g id="gLines"></g>
+        <g id="gDots"></g>
+        <g id="gLastMove"></g>
+        <g id="gPieces"></g>
+        <g id="gHints"></g>
+        <g id="gHits"></g>
+      </svg>
+
+      <div id="result" class="result hidden">
+        <div class="result-card">
+          <h3 id="resultTitle">Goats win</h3>
+          <p id="resultText">Every tiger is trapped.</p>
+          <button id="btnResultNew" class="btn btn-primary btn-block">Play again</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─────────────── SIDEBAR ─────────────── -->
+  <aside class="side">
+
+    <section class="panel">
+      <h2>Score</h2>
+
+      <div class="score-row">
+        <span class="score-label"><span class="score-chip"></span> Goats to place</span>
+        <span class="score-value"><span id="goatsLeft">20</span><small> / 20</small></span>
+      </div>
+
+      <div class="score-row">
+        <span class="score-label"><span class="score-chip"></span> Goats on board</span>
+        <span id="goatsBoard" class="score-value">0</span>
+      </div>
+
+      <div class="score-row">
+        <span class="score-label"><span class="score-chip tiger"></span> Goats eaten</span>
+        <span class="pips" id="pips" aria-label="Goats eaten out of 5"></span>
+      </div>
+
+      <div class="score-row">
+        <span class="score-label"><span class="score-chip tiger"></span> Tigers trapped</span>
+        <span class="score-value"><span id="tigersBlocked">0</span><small> / 4</small></span>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Game</h2>
+
+      <div class="field">
+        <span>Mode</span>
+        <div class="segmented" role="radiogroup" aria-label="Game mode">
+          <button type="button" class="seg" id="modeVs" role="radio" aria-checked="true">Against the computer</button>
+          <button type="button" class="seg" id="modeHot" role="radio" aria-checked="false">Two players</button>
+        </div>
+      </div>
+
+      <label class="field" id="fieldSide"><span>You play</span>
+        <select id="optSide">
+          <option value="goat">Goats (place and surround)</option>
+          <option value="tiger">Tigers (hunt and jump)</option>
+        </select>
+      </label>
+
+      <label class="field" id="fieldLevel"><span>Computer strength</span>
+        <select id="optLevel">
+          <option value="easy">Easy</option>
+          <option value="medium" selected>Medium</option>
+          <option value="hard">Hard</option>
+        </select>
+      </label>
+
+      <div class="seats hidden" id="seats">
+        <div class="seat">
+          <span class="score-chip"></span>
+          <label class="seat-name"><span class="sr-only">Name of the goats player</span>
+            <input type="text" id="nameGoat" value="Player 1" maxlength="18" spellcheck="false">
+          </label>
+          <span class="seat-role">Goats</span>
+        </div>
+        <div class="seat">
+          <span class="score-chip tiger"></span>
+          <label class="seat-name"><span class="sr-only">Name of the tigers player</span>
+            <input type="text" id="nameTiger" value="Player 2" maxlength="18" spellcheck="false">
+          </label>
+          <span class="seat-role">Tigers</span>
+        </div>
+        <button type="button" class="btn btn-block" id="btnSwap">Swap sides</button>
+      </div>
+
+      <label class="check"><input type="checkbox" id="optHints" checked> Show where the selected piece can go</label>
+      <label class="check"><input type="checkbox" id="optMovable"> Highlight the pieces that can move</label>
+
+      <div class="btn-row">
+        <button id="btnUndo" class="btn btn-block" disabled>Undo</button>
+        <button id="btnRestart" class="btn btn-block">Restart</button>
+      </div>
+      <p class="hint">Changing who you play or the strength starts a fresh game.</p>
+    </section>
+
+    <section class="panel">
+      <h2>Moves</h2>
+      <div class="log" id="log"><p class="log-empty">No moves yet.</p></div>
+    </section>
+
+    <section class="panel">
+      <h2>How to play</h2>
+      <ol class="rules">
+        <li>Four tigers start in the corners. Twenty goats are placed one at a time on any empty point.</li>
+        <li>Goats go first and cannot move at all until all twenty are on the board.</li>
+        <li>Tigers move one step along a drawn line, or jump straight over a single goat to the empty point behind it and eat that goat.</li>
+        <li>Once every goat is placed, goats also move one step along a line. Goats never jump.</li>
+        <li>Tigers win by eating five goats. Goats win by blocking all four tigers so no tiger can move.</li>
+      </ol>
+      <p class="hint">Points are named like a map: columns <b>a</b> to <b>e</b> from the left, rows <b>1</b> to <b>5</b> from the top. So <b>c3</b> is the centre.</p>
+    </section>
+
+    <p class="foot">
+      Bagh Chal is a traditional game of Nepal. Everything runs in this browser, nothing is sent anywhere.<br>
+      <a href="../web-apps.html">Back to web apps</a>
+    </p>
+  </aside>
+
+</main>
+
+<div id="toast" class="toast hidden"></div>
+
+<script src="app.js?v=1"></script>
+</body>
+</html>
