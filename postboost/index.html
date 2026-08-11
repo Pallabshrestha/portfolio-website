@@ -1,0 +1,1632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PostBoost - Which photo should I post?</title>
+<style>
+:root {
+  --bg:#fff; --bg-soft:#f6f7f9; --bg-sunk:#eceef1;
+  --fg:#14171a; --fg-soft:#5b6470; --fg-faint:#8a929c;
+  --line:#dfe3e8; --accent:#2f6df6; --accent-fg:#fff; --accent-soft:#e8effe;
+  --good:#17795e; --good-soft:#e3f4ee; --warn:#9a6400; --bad:#b3261e; --radius:10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:#101317; --bg-soft:#171b21; --bg-sunk:#1e242c;
+    --fg:#e8eaed; --fg-soft:#a4adb8; --fg-faint:#78818c;
+    --line:#2a313a; --accent:#5b8cff; --accent-fg:#0b0e12; --accent-soft:#1b2740;
+    --good:#4ecfa6; --good-soft:#152a24; --warn:#e0a83a; --bad:#ff7b72;
+  }
+}
+* { box-sizing:border-box; }
+html,body { margin:0; padding:0; }
+body {
+  background:var(--bg); color:var(--fg);
+  font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased; overflow-x:hidden;
+}
+.wrap { max-width:1080px; margin:0 auto; padding:24px 16px 80px; }
+h1 { font-size:24px; margin:0 0 4px; letter-spacing:-.02em; }
+h2 { font-size:17px; margin:0 0 12px; letter-spacing:-.01em; }
+h3 { font-size:12px; margin:0 0 8px; text-transform:uppercase; letter-spacing:.07em; color:var(--fg-soft); }
+p { margin:0 0 10px; }
+a { color:var(--accent); }
+small,.small { font-size:12.5px; color:var(--fg-soft); }
+.muted { color:var(--fg-soft); } .faint { color:var(--fg-faint); }
+header.top { display:flex; flex-wrap:wrap; gap:12px; align-items:baseline; justify-content:space-between; margin-bottom:18px; }
+.card { background:var(--bg-soft); border:1px solid var(--line); border-radius:var(--radius); padding:16px; margin-bottom:16px; }
+.row { display:flex; flex-wrap:wrap; gap:10px; }
+.grid2 { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:10px; }
+label.fld { display:block; font-size:12.5px; color:var(--fg-soft); margin-bottom:4px; }
+input[type=text],input[type=password],select,textarea {
+  width:100%; padding:8px 10px; font:inherit; font-size:14px;
+  background:var(--bg); color:var(--fg); border:1px solid var(--line); border-radius:8px;
+}
+input:focus,select:focus { outline:2px solid var(--accent); outline-offset:-1px; }
+button {
+  font:inherit; font-size:14px; padding:8px 14px; border-radius:8px;
+  border:1px solid var(--line); background:var(--bg); color:var(--fg);
+}
+button:hover:not(:disabled) { border-color:var(--accent); }
+button:disabled { opacity:.45; cursor:not-allowed; }
+button.primary { background:var(--accent); color:var(--accent-fg); border-color:var(--accent); font-weight:600; }
+button.tiny { padding:3px 8px; font-size:12px; border-radius:6px; }
+a,button,summary,.chip,.thumb,[role=tab] { cursor:pointer; }
+button:disabled { cursor:not-allowed; }
+.chip {
+  display:inline-flex; align-items:center; gap:6px; padding:6px 12px;
+  border:1px solid var(--line); border-radius:999px; background:var(--bg); font-size:13.5px; user-select:none;
+}
+.chip.on { background:var(--accent-soft); border-color:var(--accent); font-weight:600; }
+.chip input { margin:0; }
+#drop { border:2px dashed var(--line); border-radius:var(--radius); padding:28px 16px; text-align:center; background:var(--bg); transition:border-color .15s,background .15s; }
+#drop.hot { border-color:var(--accent); background:var(--accent-soft); }
+.thumbs { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; margin-top:12px; }
+.thumb { position:relative; border:1px solid var(--line); border-radius:8px; overflow:hidden; background:var(--bg-sunk); }
+.thumb img { display:block; width:100%; height:120px; object-fit:cover; }
+.thumb .bar { display:flex; align-items:center; justify-content:space-between; gap:4px; padding:4px 6px; font-size:11.5px; }
+.thumb .nm { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.thumb.win { border-color:var(--good); box-shadow:0 0 0 2px var(--good) inset; }
+.thumb.chosen { border-color:var(--accent); box-shadow:0 0 0 2px var(--accent) inset; }
+.badge { display:inline-block; padding:1px 7px; border-radius:999px; font-size:11px; font-weight:700; letter-spacing:.03em; }
+.badge.good { background:var(--good); color:var(--bg); }
+.badge.accent { background:var(--accent); color:var(--accent-fg); }
+.badge.line { border:1px solid var(--line); color:var(--fg-soft); }
+.notice { border-left:3px solid var(--warn); background:var(--bg-sunk); padding:10px 12px; border-radius:0 8px 8px 0; font-size:13.5px; margin-bottom:12px; }
+.notice.danger { border-left-color:var(--bad); }
+.notice.info { border-left-color:var(--accent); }
+.notice.ok { border-left-color:var(--good); background:var(--good-soft); }
+ol.steps { list-style:none; margin:0; padding:0; }
+ol.steps li { display:flex; gap:10px; align-items:flex-start; padding:5px 0; font-size:13.5px; }
+.dot { flex:none; width:16px; height:16px; border-radius:50%; border:2px solid var(--line); margin-top:3px; }
+.dot.run { border-color:var(--accent); border-right-color:transparent; animation:spin .8s linear infinite; }
+.dot.done { border-color:var(--good); background:var(--good); }
+.dot.fail { border-color:var(--bad); background:var(--bad); }
+.dot.skip { border-style:dotted; }
+@keyframes spin { to { transform:rotate(360deg); } }
+.tabs { display:flex; flex-wrap:wrap; gap:6px; border-bottom:1px solid var(--line); margin-bottom:14px; }
+[role=tab] { padding:8px 14px; border:1px solid transparent; border-bottom:none; border-radius:8px 8px 0 0; background:none; color:var(--fg-soft); font-size:14px; margin-bottom:-1px; }
+[role=tab][aria-selected=true] { background:var(--bg-soft); border-color:var(--line); color:var(--fg); font-weight:600; }
+.block { border:1px solid var(--line); border-radius:8px; background:var(--bg); margin-bottom:10px; }
+.block>.head { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 10px; border-bottom:1px solid var(--line); }
+.block>.body { padding:10px; }
+pre.copy { margin:0; white-space:pre-wrap; word-break:break-word; font:inherit; font-size:14px; }
+table { border-collapse:collapse; width:100%; font-size:13.5px; }
+th,td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
+th { color:var(--fg-soft); font-weight:600; font-size:11.5px; text-transform:uppercase; letter-spacing:.05em; }
+td.num { font-variant-numeric:tabular-nums; white-space:nowrap; }
+.scroll-x { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+.meter { display:inline-block; width:44px; height:6px; background:var(--bg-sunk); border-radius:3px; overflow:hidden; vertical-align:middle; }
+.meter>i { display:block; height:100%; background:var(--accent); }
+.meter.g>i { background:var(--good); } .meter.b>i { background:var(--bad); }
+ul.tight { margin:0 0 6px; padding-left:18px; } ul.tight li { margin-bottom:4px; }
+.hide { display:none !important; }
+.kv { font-size:13.5px; } .kv b { color:var(--fg-soft); font-weight:600; }
+.imp-high { color:var(--bad); font-weight:700; } .imp-medium { color:var(--warn); font-weight:700; } .imp-low { color:var(--fg-soft); font-weight:700; }
+.winbox { display:flex; gap:14px; align-items:flex-start; flex-wrap:wrap; }
+.winbox img { width:190px; max-width:45%; border-radius:8px; border:2px solid var(--good); }
+footer { margin-top:30px; padding-top:16px; border-top:1px solid var(--line); font-size:12.5px; color:var(--fg-soft); }
+code { font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:.92em; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <div>
+    <h1>PostBoost</h1>
+    <div class="small">Upload similar photos. Get measured comparison, a recommendation, and concrete fixes. No account, no key, nothing stored.</div>
+  </div>
+  <div class="small faint" id="tokenmeter"></div>
+</header>
+
+<section class="card">
+  <h2>1. Photos <span class="small faint">1-8 images, jpg / png / webp, max 15 MB each</span></h2>
+  <div id="drop">
+    <div><strong>Drag photos here</strong> or <button type="button" id="pick">choose files</button></div>
+    <div class="small faint" style="margin-top:6px">Best results with several shots of the same thing - that's what this is for.</div>
+    <input type="file" id="file" accept="image/jpeg,image/png,image/webp" multiple hidden>
+  </div>
+  <div id="filelog"></div>
+  <div class="thumbs" id="thumbs"></div>
+  <div class="small faint" style="margin-top:8px">
+    Everything runs in this tab. Photos are decoded to a canvas and measured locally - they are not uploaded anywhere
+    unless you switch on the optional caption writer below.
+  </div>
+</section>
+
+<section class="card">
+  <h2>2. Where are you posting?</h2>
+  <div class="row" id="platforms"></div>
+  <div class="grid2" style="margin-top:14px">
+    <div><label class="fld" for="goal">Goal <span class="faint">(shifts how photos are weighed)</span></label><select id="goal">
+      <option value="">Balanced</option><option value="reach">reach</option><option value="engagement">engagement</option><option value="clicks">clicks</option><option value="follows">follows</option>
+    </select></div>
+    <div><label class="fld" for="niche">Niche / topic <span class="faint">(optional, used by the caption writer)</span></label><input type="text" id="niche" placeholder="e.g. speciality coffee roasting"></div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>3. Captions <span class="badge line">optional</span></h2>
+  <p class="small" style="margin-bottom:10px">
+    Everything above works with no key. Writing captions, hashtags and alt text is the one part that needs a language
+    model - measuring pixels can't produce sentences. Leave this off and you'll get a writing brief instead: the exact
+    character counts, hashtag counts, tone and safe zones for each platform, so you can write them yourself in a minute.
+    If you do want them written, there is a free option and a paid one.
+  </p>
+  <label class="chip" id="aitoggle"><input type="checkbox" id="useai"> Use an AI model to write captions</label>
+  <div id="aifields" class="hide" style="margin-top:14px">
+    <h3>Provider</h3>
+    <div class="row" id="providers"></div>
+    <div class="notice info" id="providernote" style="margin-top:12px"></div>
+    <div class="grid2">
+      <div><label class="fld" for="apikey"><span id="keylabel">API key</span></label>
+        <input type="password" id="apikey" autocomplete="off" spellcheck="false"></div>
+      <div><label class="fld" for="model">Model</label><select id="model"></select></div>
+    </div>
+    <div class="small faint" style="margin-top:8px">
+      Whichever you pick, the key stays in this tab's memory only - never storage, never anywhere but that provider.
+      Ticking this box is the only thing that sends your photos off the machine; untick it and they never leave.
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <div class="row" style="align-items:center; justify-content:space-between">
+    <button class="primary" id="run" disabled>Analyze</button>
+    <div class="small faint" id="runhint"></div>
+  </div>
+  <div id="progress" class="hide" style="margin-top:14px"><ol class="steps" id="steplist"></ol></div>
+  <div id="runerr" class="hide"></div>
+</section>
+
+<section id="results" class="hide">
+  <div class="notice danger">
+    <strong>This report is not saved.</strong> It lives in this tab's memory only. Reloading or closing destroys it.
+    Copy what you need or use <em>Export Markdown</em> first.
+  </div>
+  <div class="row" style="margin-bottom:14px">
+    <button id="export">Export Markdown</button>
+    <button id="discard">Discard everything now</button>
+  </div>
+  <div id="out"></div>
+</section>
+
+<footer>
+  <p><strong>What is measured and what is judged.</strong> Sharpness (variance of the Laplacian), exposure and highlight
+  clipping, contrast, colourfulness, horizon tilt, background clutter, subject placement and near-duplicate distance are
+  <em>measured</em> from your pixels - real numbers, shown next to every verdict so you can disagree with the weighting
+  rather than a black box. The 1-10 scores and the winner are <em>judged</em>: they apply documented thresholds and
+  per-platform weights to those numbers. That is a defensible heuristic, not ground truth, and it says nothing about
+  what a photo is <em>of</em>. Only the optional caption writer understands subject matter.</p>
+  <p><strong>Data policy.</strong> With captions off, nothing leaves your browser - there is no server behind this page.
+  With captions on, the chosen photo and its measurements are sent to whichever provider you picked
+  (<code>integrate.api.nvidia.com</code> or <code>api.anthropic.com</code>); that is a real hop, and "we don't store it"
+  is a claim about this page, not about every provider in the chain. Their retention and training terms are theirs, not
+  mine to promise - read them if the photos are sensitive. Nothing here writes to localStorage, sessionStorage,
+  IndexedDB or cookies, ever.</p>
+</footer>
+
+</div>
+
+<script>
+"use strict";
+
+/* ============================ platform rules ============================ */
+const PLATFORMS = {
+  linkedin: {
+    label: "LinkedIn", carousel: true, aspects: ["1:1", "4:5"],
+    captionRule: "1200-1800 characters, hook in the first 2 lines before the 'see more' fold",
+    hashtagRule: "3-5 hashtags, industry-specific",
+    toneRule: "professional, insight-led, first-person story",
+    extras: "no external links in the body - put the link in the first comment",
+    weights: { sharp: .20, light: .25, clutter: .20, contrast: .15, colour: .05, subject: .15 }
+  },
+  instagram: {
+    label: "Instagram", carousel: true, aspects: ["4:5", "1:1", "9:16"],
+    captionRule: "125-300 characters for the visible hook, longer body optional",
+    hashtagRule: "8-15 hashtags, mixing broad / niche / micro",
+    toneRule: "visual, personal, emoji-friendly",
+    extras: "alt text matters; hashtags can go in the first comment",
+    weights: { sharp: .20, light: .15, clutter: .10, contrast: .15, colour: .25, subject: .15 }
+  },
+  facebook: {
+    label: "Facebook", carousel: true, aspects: ["1:1", "4:5"],
+    captionRule: "40-120 characters performs best",
+    hashtagRule: "1-3 hashtags only",
+    toneRule: "conversational, community-oriented",
+    extras: "a question prompt drives comments",
+    weights: { sharp: .18, light: .20, clutter: .15, contrast: .17, colour: .15, subject: .15 }
+  },
+  tiktok: {
+    label: "TikTok", carousel: false, aspects: ["9:16"],
+    captionRule: "80-150 characters",
+    hashtagRule: "3-6 hashtags, trend plus niche",
+    toneRule: "punchy, native slang, hook first",
+    extras: "hook in the first 3 seconds; keep text out of the top 12% and bottom 20% safe zones",
+    weights: { sharp: .15, light: .15, clutter: .10, contrast: .25, colour: .20, subject: .15 }
+  }
+};
+const ASPECTS = { "1:1": 1, "4:5": 0.8, "9:16": 9 / 16, "16:9": 16 / 9 };
+const GOAL_NUDGE = {
+  reach:      { contrast: .06, colour: .06, subject: .02, sharp: -.05, light: -.05, clutter: -.04 },
+  engagement: { subject: .08, sharp: .02, colour: .02, clutter: -.05, light: -.04, contrast: -.03 },
+  clicks:     { sharp: .06, light: .06, clutter: .03, colour: -.06, contrast: -.05, subject: -.04 },
+  follows:    { colour: .07, subject: .06, contrast: .02, sharp: -.05, light: -.05, clutter: -.05 }
+};
+
+/* ===================== caption providers (both optional) ===================== */
+const PROVIDERS = {
+  nvidia: {
+    label: "NVIDIA NIM",
+    tag: "free credits",
+    url: "https://integrate.api.nvidia.com/v1/chat/completions",
+    keyUrl: "https://build.nvidia.com/",
+    keyLabel: "NVIDIA API key",
+    keyPlaceholder: "nvapi-...",
+    keyPrefix: "nvapi-",
+    // NVIDIA rejects oversized inline images, so encode smaller than the Anthropic path.
+    imageEdge: 760, imageQuality: 0.72, maxImageBytes: 170000,
+    structuredOutputs: false,
+    note: 'Sign in at <a href="https://build.nvidia.com/" target="_blank" rel="noopener">build.nvidia.com</a> and click ' +
+      '<em>Get API Key</em> on any vision model. The free allowance is a credit grant for evaluation, not an unlimited tier - ' +
+      'when the credits run out the calls start failing rather than silently billing you. ' +
+      '<strong>One caveat I cannot test for you:</strong> NVIDIA does not document whether it permits calls straight from a ' +
+      'browser. If it does not, the request is blocked before it is sent and you will see a CORS message below - ' +
+      'nothing is broken on your side, that route is simply closed and you would need Anthropic or a small proxy of your own.',
+    models: [
+      ["meta/llama-3.2-90b-vision-instruct", "Llama 3.2 90B Vision - best quality"],
+      ["meta/llama-3.2-11b-vision-instruct", "Llama 3.2 11B Vision - faster, lighter"],
+      ["microsoft/phi-3.5-vision-instruct", "Phi 3.5 Vision - smallest"]
+    ]
+  },
+  anthropic: {
+    label: "Anthropic",
+    tag: "paid",
+    url: "https://api.anthropic.com/v1/messages",
+    keyUrl: "https://console.anthropic.com/settings/keys",
+    keyLabel: "Anthropic API key",
+    keyPlaceholder: "sk-ant-...",
+    keyPrefix: "sk-ant-",
+    imageEdge: 1568, imageQuality: 0.9, maxImageBytes: 4500000,
+    structuredOutputs: true,
+    note: 'Keys at <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>. ' +
+      'Billed per token, so a run of a few platforms costs fractions of a cent. Anthropic officially supports calling it ' +
+      'from a browser, so this route is the one known to work without a server.',
+    models: [
+      ["claude-sonnet-5", "Claude Sonnet 5"],
+      ["claude-opus-5", "Claude Opus 5 - highest quality"],
+      ["claude-haiku-4-5", "Claude Haiku 4.5 - cheapest"]
+    ]
+  }
+};
+
+const MAX_PHOTOS = 8, MAX_BYTES = 15 * 1024 * 1024, WORK_EDGE = 720;
+
+/* ================================ state ================================ */
+const state = {
+  useAI: false, provider: "nvidia",
+  keys: { nvidia: "", anthropic: "" },
+  models: { nvidia: PROVIDERS.nvidia.models[0][0], anthropic: PROVIDERS.anthropic.models[0][0] },
+  assets: [], platforms: new Set(), goal: "", niche: "",
+  compare: null, recs: null, writing: null, chosenId: null,
+  usage: { input: 0, output: 0 }, running: false, done: false
+};
+const $ = (id) => document.getElementById(id);
+const prov = () => PROVIDERS[state.provider];
+const curKey = () => state.keys[state.provider] || "";
+const curModel = () => state.models[state.provider];
+const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const r1 = (v) => Math.round(v * 10) / 10;
+const pct = (v) => (v * 100).toFixed(1) + "%";
+
+/* =========================================================================
+   LOCAL ENGINE - everything below runs on pixels, offline, no key.
+   ========================================================================= */
+
+function pixelsOf(img, maxEdge) {
+  const s = Math.min(1, maxEdge / Math.max(img.naturalWidth, img.naturalHeight));
+  const w = Math.max(16, Math.round(img.naturalWidth * s));
+  const h = Math.max(16, Math.round(img.naturalHeight * s));
+  const c = document.createElement("canvas"); c.width = w; c.height = h;
+  const ctx = c.getContext("2d", { willReadFrequently: true });
+  ctx.drawImage(img, 0, 0, w, h);
+  return ctx.getImageData(0, 0, w, h);
+}
+
+/** Rec.709 luma, 0..1, plus HSV-style saturation. */
+function channels(id) {
+  const { width: w, height: h, data: d } = id;
+  const gray = new Float32Array(w * h), sat = new Float32Array(w * h);
+  for (let i = 0, p = 0; p < w * h; i += 4, p++) {
+    const r = d[i], g = d[i + 1], b = d[i + 2];
+    gray[p] = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+    sat[p] = mx === 0 ? 0 : (mx - mn) / mx;
+  }
+  return { gray, sat, w, h };
+}
+
+function lumStats(gray) {
+  const hist = new Float64Array(256);
+  let sum = 0;
+  for (let i = 0; i < gray.length; i++) { const b = clamp(Math.round(gray[i] * 255), 0, 255); hist[b]++; sum += gray[i]; }
+  const n = gray.length, mean = sum / n;
+  let s2 = 0; for (let i = 0; i < gray.length; i++) { const d = gray[i] - mean; s2 += d * d; }
+  const std = Math.sqrt(s2 / n);
+  const pctl = (q) => { let acc = 0; const t = q * n; for (let b = 0; b < 256; b++) { acc += hist[b]; if (acc >= t) return b / 255; } return 1; };
+  // "clipped" = the top/bottom 2 code values, where detail is gone for good
+  const clipWhite = (hist[255] + hist[254]) / n, clipBlack = (hist[0] + hist[1]) / n;
+  return { mean, std, p01: pctl(0.01), p50: pctl(0.5), p99: pctl(0.99), clipWhite, clipBlack, range: pctl(0.99) - pctl(0.01) };
+}
+
+/** Variance of the Laplacian - the standard focus measure. Higher is sharper. */
+function lapVar(gray, w, h, x0, y0, x1, y1) {
+  let sum = 0, sum2 = 0, n = 0;
+  const xa = Math.max(1, x0), ya = Math.max(1, y0), xb = Math.min(w - 1, x1), yb = Math.min(h - 1, y1);
+  for (let y = ya; y < yb; y++) for (let x = xa; x < xb; x++) {
+    const i = y * w + x;
+    const v = 4 * gray[i] - gray[i - 1] - gray[i + 1] - gray[i - w] - gray[i + w];
+    sum += v; sum2 += v * v; n++;
+  }
+  if (n < 4) return 0;
+  const m = sum / n;
+  return Math.max(0, (sum2 / n - m * m)) * 1000;
+}
+
+function sobel(gray, w, h) {
+  const mag = new Float32Array(w * h), ang = new Float32Array(w * h);
+  for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) {
+    const i = y * w + x;
+    const gx = -gray[i - w - 1] - 2 * gray[i - 1] - gray[i + w - 1] + gray[i - w + 1] + 2 * gray[i + 1] + gray[i + w + 1];
+    const gy = -gray[i - w - 1] - 2 * gray[i - w] - gray[i - w + 1] + gray[i + w - 1] + 2 * gray[i + w] + gray[i + w + 1];
+    mag[i] = Math.hypot(gx, gy); ang[i] = Math.atan2(gy, gx);
+  }
+  return { mag, ang };
+}
+
+/**
+ * Dominant near-horizontal edge direction. Edge orientation is perpendicular
+ * to the gradient, so a level horizon puts a spike at 0 degrees.
+ * Returns null when the image has no strong horizontal structure to judge.
+ */
+function horizonTilt(mag, ang, w, h) {
+  let maxMag = 0;
+  for (let i = 0; i < mag.length; i++) if (mag[i] > maxMag) maxMag = mag[i];
+  if (maxMag <= 0) return null;
+  const thr = maxMag * 0.35;
+  const bins = new Float64Array(181); // -90..90
+  let strong = 0;
+  for (let i = 0; i < mag.length; i++) {
+    if (mag[i] < thr) continue;
+    strong++;
+    let deg = (ang[i] * 180 / Math.PI) + 90;          // edge angle
+    while (deg >= 90) deg -= 180; while (deg < -90) deg += 180;
+    bins[Math.round(deg) + 90] += mag[i];
+  }
+  // Need enough strong edge pixels to say anything - scaled to the frame, not a fixed count.
+  if (strong < Math.max(60, w * h * 0.002)) return null;
+  let best = -1, bestVal = 0, total = 0;
+  for (let b = 0; b <= 180; b++) total += bins[b];
+  for (let d = -20; d <= 20; d++) { const v = bins[d + 90]; if (v > bestVal) { bestVal = v; best = d; } }
+  if (best === -1 || total === 0) return null;
+  const share = bestVal / total;
+  if (share < 0.012) return null;   // no real horizontal line present
+  return { deg: best, confidence: clamp(share * 22, 0, 1) };
+}
+
+function colorfulness(id) {
+  const d = id.data;
+  let rgS = 0, rgS2 = 0, ybS = 0, ybS2 = 0, n = 0;
+  for (let i = 0; i < d.length; i += 4) {
+    const rg = d[i] - d[i + 1], yb = 0.5 * (d[i] + d[i + 1]) - d[i + 2];
+    rgS += rg; rgS2 += rg * rg; ybS += yb; ybS2 += yb * yb; n++;
+  }
+  const mrg = rgS / n, myb = ybS / n;
+  const srg = Math.sqrt(Math.max(0, rgS2 / n - mrg * mrg)), syb = Math.sqrt(Math.max(0, ybS2 / n - myb * myb));
+  return Math.hypot(srg, syb) + 0.3 * Math.hypot(mrg, myb);   // Hasler & Suesstrunk
+}
+
+const CELLS = 24;
+/** Cheap saliency: gradient energy + saturation, with a mild centre prior. */
+function saliency(gray, sat, mag, w, h) {
+  const gx = CELLS, gy = CELLS;
+  const cw = w / gx, ch = h / gy;
+  const grid = new Float32Array(gx * gy), gm = new Float32Array(gx * gy), gs = new Float32Array(gx * gy);
+  for (let cy = 0; cy < gy; cy++) for (let cx = 0; cx < gx; cx++) {
+    let sm = 0, ss = 0, n = 0;
+    const x0 = Math.floor(cx * cw), x1 = Math.floor((cx + 1) * cw), y0 = Math.floor(cy * ch), y1 = Math.floor((cy + 1) * ch);
+    for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) { const i = y * w + x; sm += mag[i]; ss += sat[i]; n++; }
+    const k = cy * gx + cx;
+    gm[k] = n ? sm / n : 0; gs[k] = n ? ss / n : 0;
+  }
+  const norm = (a) => { let mx = 0; for (const v of a) if (v > mx) mx = v; return mx > 0 ? a.map((v) => v / mx) : Array.from(a); };
+  const nm = norm(gm), ns = norm(gs);
+  for (let cy = 0; cy < gy; cy++) for (let cx = 0; cx < gx; cx++) {
+    const k = cy * gx + cx;
+    const dx = (cx + .5) / gx - .5, dy = (cy + .5) / gy - .5;
+    const centre = 1 - 0.35 * Math.min(1, Math.hypot(dx, dy) / 0.7);
+    grid[k] = (0.62 * nm[k] + 0.38 * ns[k]) * centre;
+  }
+  let mean = 0; for (const v of grid) mean += v; mean /= grid.length;
+  let sd = 0; for (const v of grid) sd += (v - mean) * (v - mean); sd = Math.sqrt(sd / grid.length);
+  const thr = mean + 0.6 * sd;
+  let minx = gx, miny = gy, maxx = -1, maxy = -1, wsum = 0, cxs = 0, cys = 0, hot = 0;
+  for (let cy = 0; cy < gy; cy++) for (let cx = 0; cx < gx; cx++) {
+    const v = grid[cy * gx + cx];
+    wsum += v; cxs += v * (cx + .5) / gx; cys += v * (cy + .5) / gy;
+    if (v >= thr) { hot++; if (cx < minx) minx = cx; if (cx > maxx) maxx = cx; if (cy < miny) miny = cy; if (cy > maxy) maxy = cy; }
+  }
+  if (maxx < 0) { minx = 0; miny = 0; maxx = gx - 1; maxy = gy - 1; hot = gx * gy; }
+  const box = { x: minx / gx, y: miny / gy, w: (maxx - minx + 1) / gx, h: (maxy - miny + 1) / gy };
+  const centroid = wsum > 0 ? { x: cxs / wsum, y: cys / wsum } : { x: .5, y: .5 };
+  // clutter: gradient energy outside the central 60% versus inside it
+  let inSum = 0, inN = 0, outSum = 0, outN = 0;
+  for (let cy = 0; cy < gy; cy++) for (let cx = 0; cx < gx; cx++) {
+    const fx = (cx + .5) / gx, fy = (cy + .5) / gy;
+    const inner = fx > .2 && fx < .8 && fy > .2 && fy < .8;
+    if (inner) { inSum += gm[cy * gx + cx]; inN++; } else { outSum += gm[cy * gx + cx]; outN++; }
+  }
+  const clutterRatio = (inN && outN && inSum > 0) ? (outSum / outN) / (inSum / inN) : 1;
+  return { grid, box, centroid, subjectShare: hot / (gx * gy), clutterRatio, cells: gx };
+}
+
+/** 64-bit difference hash - the near-duplicate fingerprint. */
+function dhash(img) {
+  const c = document.createElement("canvas"); c.width = 9; c.height = 8;
+  const ctx = c.getContext("2d", { willReadFrequently: true });
+  ctx.drawImage(img, 0, 0, 9, 8);
+  const d = ctx.getImageData(0, 0, 9, 8).data;
+  const bits = [];
+  for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) {
+    const a = (y * 9 + x) * 4, b = (y * 9 + x + 1) * 4;
+    const la = 0.2126 * d[a] + 0.7152 * d[a + 1] + 0.0722 * d[a + 2];
+    const lb = 0.2126 * d[b] + 0.7152 * d[b + 1] + 0.0722 * d[b + 2];
+    bits.push(la > lb ? 1 : 0);
+  }
+  return bits;
+}
+const hamming = (a, b) => a.reduce((n, v, i) => n + (v === b[i] ? 0 : 1), 0);
+
+/** 32x32 luma thumbnail, used for the region-by-region differential. */
+function lumaTile(img, n) {
+  const c = document.createElement("canvas"); c.width = n; c.height = n;
+  const ctx = c.getContext("2d", { willReadFrequently: true });
+  ctx.drawImage(img, 0, 0, n, n);
+  const d = ctx.getImageData(0, 0, n, n).data;
+  const out = new Float32Array(n * n);
+  for (let p = 0; p < n * n; p++) out[p] = (0.2126 * d[p * 4] + 0.7152 * d[p * 4 + 1] + 0.0722 * d[p * 4 + 2]) / 255;
+  return out;
+}
+
+const NAMED = [
+  ["black", 20, 20, 22], ["charcoal", 55, 58, 62], ["grey", 128, 130, 133], ["silver", 190, 192, 195], ["white", 244, 245, 246],
+  ["cream", 240, 232, 210], ["beige", 214, 196, 165], ["tan", 190, 155, 110], ["brown", 120, 82, 52], ["terracotta", 190, 100, 70],
+  ["red", 200, 50, 45], ["pink", 232, 140, 165], ["orange", 232, 140, 45], ["gold", 214, 175, 60], ["yellow", 235, 214, 70],
+  ["olive", 128, 132, 60], ["green", 70, 150, 85], ["teal", 55, 140, 140], ["sky blue", 120, 180, 225], ["blue", 55, 95, 190],
+  ["navy", 32, 48, 92], ["purple", 130, 85, 175], ["magenta", 190, 70, 150]
+];
+function colorName(r, g, b) {
+  let best = NAMED[0][0], bd = Infinity;
+  for (const [nm, nr, ng, nb] of NAMED) {
+    const d = 2 * (r - nr) ** 2 + 4 * (g - ng) ** 2 + 3 * (b - nb) ** 2;
+    if (d < bd) { bd = d; best = nm; }
+  }
+  return best;
+}
+const hex = (r, g, b) => "#" + [r, g, b].map((v) => clamp(Math.round(v), 0, 255).toString(16).padStart(2, "0")).join("");
+
+function dominantColors(id, k) {
+  const d = id.data, bins = new Map();
+  for (let i = 0; i < d.length; i += 4) {
+    const key = ((d[i] >> 4) << 8) | ((d[i + 1] >> 4) << 4) | (d[i + 2] >> 4);
+    const e = bins.get(key);
+    if (e) { e.n++; e.r += d[i]; e.g += d[i + 1]; e.b += d[i + 2]; }
+    else bins.set(key, { n: 1, r: d[i], g: d[i + 1], b: d[i + 2] });
+  }
+  const total = d.length / 4;
+  return [...bins.values()].sort((a, b) => b.n - a.n).slice(0, k).map((e) => {
+    const r = e.r / e.n, g = e.g / e.n, b = e.b / e.n;
+    return { hex: hex(r, g, b), name: colorName(r, g, b), share: e.n / total };
+  });
+}
+
+/* ---------- scoring: documented thresholds over measured values ---------- */
+function band(v, idealLo, idealHi, hardLo, hardHi) {
+  if (v >= idealLo && v <= idealHi) return 10;
+  if (v < idealLo) return clamp(1 + 9 * (v - hardLo) / (idealLo - hardLo), 1, 10);
+  return clamp(1 + 9 * (hardHi - v) / (hardHi - idealHi), 1, 10);
+}
+const logScore = (v, lo, hi) => clamp(1 + 9 * (Math.log10(Math.max(v, 1e-4)) - Math.log10(lo)) / (Math.log10(hi) - Math.log10(lo)), 1, 10);
+
+function measure(asset) {
+  const id = pixelsOf(asset.image, WORK_EDGE);
+  const { gray, sat, w, h } = channels(id);
+  const lum = lumStats(gray);
+  const { mag, ang } = sobel(gray, w, h);
+  const sal = saliency(gray, sat, mag, w, h);
+  const focus = lapVar(gray, w, h, 0, 0, w, h);
+  const sub = sal.box;
+  const focusSubject = lapVar(gray, w, h,
+    Math.floor(sub.x * w), Math.floor(sub.y * h), Math.ceil((sub.x + sub.w) * w), Math.ceil((sub.y + sub.h) * h));
+  const grid3 = [];
+  for (let gy = 0; gy < 3; gy++) for (let gx = 0; gx < 3; gx++)
+    grid3.push(lapVar(gray, w, h, Math.floor(gx * w / 3), Math.floor(gy * h / 3), Math.floor((gx + 1) * w / 3), Math.floor((gy + 1) * h / 3)));
+  const tilt = horizonTilt(mag, ang, w, h);
+  const cf = colorfulness(id);
+  const aspect = asset.origW / asset.origH;
+  const thirdsDist = Math.min(
+    ...[[1 / 3, 1 / 3], [2 / 3, 1 / 3], [1 / 3, 2 / 3], [2 / 3, 2 / 3]]
+      .map(([tx, ty]) => Math.hypot(sal.centroid.x - tx, sal.centroid.y - ty)));
+  const deadCentre = Math.hypot(sal.centroid.x - .5, sal.centroid.y - .5);
+
+  const m = {
+    w: asset.origW, h: asset.origH, aspect,
+    aspectLabel: nearestAspectLabel(aspect),
+    meanLum: lum.mean, contrast: lum.std, range: lum.range,
+    clipWhite: lum.clipWhite, clipBlack: lum.clipBlack,
+    focus, focusSubject, focusGrid: grid3,
+    focusPeakCell: grid3.indexOf(Math.max(...grid3)),
+    tiltDeg: tilt ? tilt.deg : null, tiltConf: tilt ? tilt.confidence : 0,
+    colorfulness: cf, saturation: sat.reduce((a, b) => a + b, 0) / sat.length,
+    subjectShare: sal.subjectShare, centroid: sal.centroid, subjectBox: sal.box,
+    thirdsDist, deadCentre, clutterRatio: sal.clutterRatio,
+    colors: dominantColors(id, 4),
+    hash: dhash(asset.image), tile: lumaTile(asset.image, 32)
+  };
+
+  m.scores = {
+    exposure: (() => {
+      let s = band(m.meanLum, .38, .62, .10, .90);
+      s -= clamp(m.clipWhite * 180, 0, 5) + clamp(m.clipBlack * 90, 0, 3);
+      return clamp(s, 1, 10);
+    })(),
+    lighting: clamp(0.5 * band(m.meanLum, .38, .62, .10, .90) + 0.5 * band(m.range, .60, 1.0, .18, 1.0), 1, 10),
+    sharpness: logScore(m.focus, 0.35, 9),
+    contrast: band(m.contrast, .16, .30, .03, .46),
+    composition: (() => {
+      let s = band(m.thirdsDist, 0, .14, .0, .45);
+      if (m.deadCentre < .05 && m.subjectShare < .3) s -= 1.5;
+      if (m.tiltDeg != null && m.tiltConf > .3) s -= clamp(Math.abs(m.tiltDeg) * .55, 0, 3);
+      return clamp(s, 1, 10);
+    })(),
+    framing: band(m.subjectShare, .14, .55, .02, .95),
+    background: band(m.clutterRatio, 0, 1.05, 0, 2.3),
+    colour: band(m.colorfulness, 32, 90, 4, 150)
+  };
+  m.scores.scrollStop = clamp(
+    .28 * m.scores.contrast + .27 * m.scores.colour + .23 * m.scores.sharpness +
+    .12 * m.scores.framing + .10 * m.scores.background, 1, 10);
+  return m;
+}
+
+function nearestAspectLabel(a) {
+  let best = null, bd = Infinity;
+  for (const [k, v] of Object.entries(ASPECTS)) { const d = Math.abs(Math.log(a / v)); if (d < bd) { bd = d; best = k; } }
+  return bd < 0.06 ? best : (a > 1 ? r1(a) + ":1 (landscape)" : "1:" + r1(1 / a) + " (portrait)");
+}
+/** Fraction of the frame lost to a centre crop at the target aspect. */
+function cropLoss(aspect, target) {
+  const keep = aspect > target ? target / aspect : aspect / target;
+  return 1 - keep;
+}
+
+/* ---------------------- comparison across the set ---------------------- */
+const SIM_BANDS = [
+  { max: 6,  key: "near-identical",         label: "near-identical frames" },
+  { max: 14, key: "variations-of-one-shot", label: "variations of one shot" },
+  { max: 24, key: "related-but-distinct",   label: "related but distinct pictures" },
+  { max: 64, key: "unrelated",              label: "different subjects" }
+];
+const REGION_NAMES = ["top left", "top centre", "top right", "left", "centre", "right", "bottom left", "bottom centre", "bottom right"];
+
+/** Where two near-identical frames actually differ, and which wins each region. */
+function regionDiff(a, b) {
+  const N = 32, G = 3, out = [];
+  // N/G is not a whole number, so walk integer cell bounds - fractional indices read undefined.
+  for (let gy = 0; gy < G; gy++) for (let gx = 0; gx < G; gx++) {
+    const y0 = Math.floor(gy * N / G), y1 = Math.floor((gy + 1) * N / G);
+    const x0 = Math.floor(gx * N / G), x1 = Math.floor((gx + 1) * N / G);
+    let diff = 0, ma = 0, mb = 0, n = 0;
+    for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
+      const i = y * N + x;
+      diff += Math.abs(a.tile[i] - b.tile[i]); ma += a.tile[i]; mb += b.tile[i]; n++;
+    }
+    out.push({ region: REGION_NAMES[gy * G + gx], diff: n ? diff / n : 0, lumA: n ? ma / n : 0, lumB: n ? mb / n : 0, cell: gy * G + gx });
+  }
+  return out.sort((x, y) => y.diff - x.diff);
+}
+
+function platformScore(m, key, goal) {
+  const cfg = PLATFORMS[key];
+  const w = { ...cfg.weights };
+  const nudge = GOAL_NUDGE[goal];
+  if (nudge) for (const k of Object.keys(w)) w[k] = Math.max(0.02, w[k] + (nudge[k] || 0));
+  const tot = Object.values(w).reduce((a, b) => a + b, 0);
+  const s = m.scores;
+  const quality =
+    (w.sharp * s.sharpness + w.light * s.lighting + w.clutter * s.background +
+     w.contrast * s.contrast + w.colour * s.colour + w.subject * s.framing) / tot;
+  const bestLoss = Math.min(...cfg.aspects.map((k) => cropLoss(m.aspect, ASPECTS[k])));
+  const aspectScore = clamp(10 - bestLoss * 26, 1, 10);
+  return { total: r1(0.76 * quality + 0.24 * aspectScore), quality: r1(quality), aspectScore: r1(aspectScore), cropLoss: bestLoss };
+}
+
+function compareAll() {
+  const A = state.assets.filter((a) => a.m);
+  const platforms = [...state.platforms];
+  const dims = [
+    ["Sharpness", "sharpness"], ["Lighting", "lighting"], ["Exposure", "exposure"],
+    ["Contrast", "contrast"], ["Composition", "composition"], ["Subject size", "framing"],
+    ["Clean background", "background"], ["Colour", "colour"], ["Scroll-stopping (proxy)", "scrollStop"]
+  ];
+
+  const overall = A.map((a) => {
+    const per = {};
+    platforms.forEach((p) => { per[p] = platformScore(a.m, p, state.goal); });
+    const mean = platforms.length ? platforms.reduce((s, p) => s + per[p].total, 0) / platforms.length : a.m.scores.scrollStop;
+    return { id: a.id, per, score: r1(mean) };
+  }).sort((x, y) => y.score - x.score);
+
+  const winnerId = overall[0].id;
+  const perPlatform = platforms.map((p) => {
+    const ranked = A.map((a) => ({ id: a.id, s: platformScore(a.m, p, state.goal) })).sort((x, y) => y.s.total - x.s.total);
+    return { platform: p, assetId: ranked[0].id, score: ranked[0].s, differs: ranked[0].id !== winnerId };
+  });
+
+  // similarity: worst-case (largest) distance in the set decides the label
+  let maxDist = 0, pairs = [];
+  for (let i = 0; i < A.length; i++) for (let j = i + 1; j < A.length; j++) {
+    const d = hamming(A[i].m.hash, A[j].m.hash);
+    pairs.push({ a: A[i].id, b: A[j].id, dist: d });
+    if (d > maxDist) maxDist = d;
+  }
+  const simBand = A.length < 2 ? null : SIM_BANDS.find((b) => maxDist <= b.max);
+
+  // differentiators: what each frame does better and worse than the field
+  const diffs = A.map((a) => {
+    const others = A.filter((x) => x.id !== a.id);
+    const gaps = dims.map(([label, k]) => ({
+      label, k, mine: a.m.scores[k],
+      best: Math.max(...others.map((o) => o.m.scores[k])),
+      worst: Math.min(...others.map((o) => o.m.scores[k]))
+    }));
+    const up = gaps.filter((g) => g.mine > g.best + 0.25).sort((x, y) => (y.mine - y.best) - (x.mine - x.best))[0];
+    const down = gaps.filter((g) => g.mine < g.worst - 0.25).sort((x, y) => (x.worst - x.mine) - (y.worst - y.mine))[0];
+    return { id: a.id, edge: up ? edgePhrase(a.m, up) : "", flaw: down ? flawPhrase(a.m, down) : "" };
+  });
+
+  // near-identical: name the regions that actually changed, and who wins them
+  let regions = null;
+  if (A.length >= 2 && simBand && (simBand.key === "near-identical" || simBand.key === "variations-of-one-shot")) {
+    const win = A.find((a) => a.id === winnerId);
+    regions = A.filter((a) => a.id !== winnerId).map((a) => {
+      const rd = regionDiff(win.m, a.m).filter((r) => r.diff > 0.012).slice(0, 3);
+      return {
+        id: a.id,
+        changed: rd.map((r) => ({
+          region: r.region, delta: r.diff,
+          brighter: r.lumA > r.lumB + .015 ? "winner" : r.lumB > r.lumA + .015 ? "other" : "same",
+          sharper: win.m.focusGrid[r.cell] > a.m.focusGrid[r.cell] * 1.08 ? "winner"
+                 : a.m.focusGrid[r.cell] > win.m.focusGrid[r.cell] * 1.08 ? "other" : "same"
+        }))
+      };
+    });
+  }
+
+  const wa = A.find((a) => a.id === winnerId);
+  return {
+    dims, overall, winnerId, perPlatform, pairs, maxDist,
+    similarity: simBand, differentiators: diffs, regions,
+    reason: winnerReason(wa, A, dims),
+    recommendation: recommendation(wa, A, perPlatform, simBand),
+    runnerUp: overall[1] ? { id: overall[1].id, gap: r1(overall[0].score - overall[1].score) } : null
+  };
+}
+
+function edgePhrase(m, g) {
+  const d = r1(g.mine - g.best);
+  const detail = {
+    sharpness: "focus measure " + r1(m.focus) + " against " + r1(m.focus) + " here",
+    exposure: "highlights clipped on only " + pct(m.clipWhite),
+    contrast: "luminance spread " + r1(m.contrast * 100) + " points",
+    composition: m.tiltDeg != null ? "level to " + r1(Math.abs(m.tiltDeg)) + " degrees" : "subject nearest a third line",
+    background: "background edge energy " + r1(m.clutterRatio) + "x the centre",
+    colour: "colourfulness " + Math.round(m.colorfulness),
+    framing: "subject fills " + pct(m.subjectShare) + " of frame",
+    lighting: "tonal range " + pct(m.range),
+    scrollStop: "strongest combined contrast, colour and focus"
+  }[g.k];
+  return g.label.toLowerCase() + " is best in the set by " + d + " points (" + detail + ")";
+}
+function flawPhrase(m, g) {
+  const d = r1(g.worst - g.mine);
+  const detail = {
+    sharpness: "focus measure " + r1(m.focus) + ", the softest here",
+    exposure: pct(m.clipWhite) + " of pixels blown, " + pct(m.clipBlack) + " crushed",
+    contrast: "luminance spread only " + r1(m.contrast * 100) + " points",
+    composition: (m.tiltDeg != null && Math.abs(m.tiltDeg) >= 1) ? "tilted " + r1(Math.abs(m.tiltDeg)) + " degrees" : "subject sits away from the third lines",
+    background: "background edge energy " + r1(m.clutterRatio) + "x the centre",
+    colour: "colourfulness only " + Math.round(m.colorfulness),
+    framing: "subject fills just " + pct(m.subjectShare),
+    lighting: "average brightness " + pct(m.meanLum),
+    scrollStop: "weakest combined contrast, colour and focus"
+  }[g.k];
+  return g.label.toLowerCase() + " is worst in the set by " + d + " points (" + detail + ")";
+}
+
+function winnerReason(wa, A, dims) {
+  const m = wa.m, others = A.filter((a) => a.id !== wa.id);
+  const wins = dims.filter(([, k]) => others.length && m.scores[k] >= Math.max(...others.map((o) => o.m.scores[k])) - 0.01)
+    .map(([label]) => label.toLowerCase().replace(" (proxy)", ""));
+  const parts = [];
+  if (wins.length) parts.push("It leads the set on " + list(wins.slice(0, 3)) + ".");
+  parts.push("Focus measure is " + r1(m.focus) + (others.length ? " against " + others.map((o) => r1(o.m.focus)).join(" and ") + " for the others" : "") + ".");
+  parts.push("Average brightness sits at " + pct(m.meanLum) + " with " + pct(m.clipWhite) + " of pixels blown out.");
+  if (m.tiltDeg != null && m.tiltConf > .3) parts.push("The dominant horizontal line is " + (Math.abs(m.tiltDeg) < 0.6 ? "level" : "off by " + r1(Math.abs(m.tiltDeg)) + " degrees") + ".");
+  parts.push("The subject fills " + pct(m.subjectShare) + " of the frame, centred at " +
+    Math.round(m.centroid.x * 100) + "% across and " + Math.round(m.centroid.y * 100) + "% down.");
+  return parts.join(" ");
+}
+
+function recommendation(wa, A, perPlatform, simBand) {
+  const name = wa.name;
+  if (A.length < 2) return "Only one photo, so nothing to compare - post " + name + " after the fixes below.";
+  const diverging = perPlatform.filter((p) => p.differs);
+  let s = "Post " + name + ".";
+  const m = wa.m, others = A.filter((a) => a.id !== wa.id);
+  const focusGap = others.length ? r1(m.focus / Math.max(...others.map((o) => o.m.focus))) : 1;
+  if (simBand && simBand.key === "near-identical") {
+    s += " These frames are near-identical, so it comes down to detail: this one is the sharpest of the set" +
+      (focusGap > 1.15 ? " by " + focusGap + "x" : " by a small margin") + " and holds its highlights best.";
+  } else if (simBand && simBand.key === "variations-of-one-shot") {
+    s += " Of these variations it has the strongest combination of focus and framing.";
+  } else {
+    s += " It scores highest once each platform's weighting is applied.";
+  }
+  if (diverging.length) {
+    s += " Swap in " + list(diverging.map((p) => {
+      const a = state.assets.find((x) => x.id === p.assetId);
+      return (a ? a.name : p.assetId) + " for " + PLATFORMS[p.platform].label;
+    })) + ".";
+  }
+  return s;
+}
+const list = (xs) => xs.length < 2 ? (xs[0] || "") : xs.slice(0, -1).join(", ") + " and " + xs[xs.length - 1];
+
+/* ------------------- recommendations, from measurements ------------------- */
+function buildRecs() {
+  const A = state.assets.filter((a) => a.m);
+  const winner = A.find((a) => a.id === state.chosenId) || A.find((a) => a.id === state.compare.winnerId);
+  const need = [...new Set([...state.platforms].flatMap((k) => PLATFORMS[k].aspects))];
+
+  const forAsset = (a, full) => {
+    const m = a.m, out = [];
+    const add = (impact, problem, fix, why) => out.push({ impact, problem, fix, why });
+
+    if (m.clipWhite > 0.02) add(m.clipWhite > 0.05 ? "high" : "medium",
+      pct(m.clipWhite) + " of pixels are pure white - that detail is gone, not recoverable in an edit",
+      "Drop exposure about " + (m.clipWhite > 0.06 ? "two thirds of a stop" : "a third of a stop") + ", or pull highlights down if you shot raw",
+      "Blown highlights read as a mistake at thumbnail size and cannot be fixed after posting");
+    if (m.clipBlack > 0.04) add(m.clipBlack > 0.10 ? "high" : "low",
+      pct(m.clipBlack) + " of pixels are crushed to pure black",
+      "Lift shadows until the darkest tone sits around 5-8% rather than 0%",
+      "Crushed blacks lose the texture that makes a photo feel three-dimensional");
+    if (m.meanLum < 0.30) add("high", "The frame is dark - average brightness is " + pct(m.meanLum) + ", well under the 38-62% band",
+      "Raise exposure until the midtone average lands near 45%", "Dark images get scrolled past, and most feeds dim images further");
+    else if (m.meanLum > 0.72) add("medium", "The frame is bright - average brightness is " + pct(m.meanLum),
+      "Pull exposure down toward 55%", "Washed-out images lose the contrast that stops a thumb");
+    if (m.scores.sharpness < 6) add(m.scores.sharpness < 4 ? "high" : "medium",
+      "Softness: focus measure is " + r1(m.focus) + ", where crisp frames read above 4",
+      "Reshoot with a faster shutter or steadier support; sharpening cannot recreate detail that was never captured",
+      "Softness is the one flaw viewers notice instantly and no caption can rescue");
+    const peak = m.focusPeakCell;
+    if (m.focusSubject < m.focus * 0.8 && peak !== 4) add("medium",
+      "The sharpest area is the " + REGION_NAMES[peak] + ", not where the subject sits",
+      "Refocus on the subject - single-point autofocus on the eyes or the product face",
+      "Focus landing behind or beside the subject makes the whole frame feel accidental");
+    if (m.contrast < 0.12) add("medium", "Flat contrast - luminance spread is only " + r1(m.contrast * 100) + " points",
+      "Add contrast or a gentle S-curve until the spread reaches 18-25 points",
+      "Flat images disappear against a busy feed background");
+    if (m.tiltDeg != null && m.tiltConf > 0.3 && Math.abs(m.tiltDeg) >= 1.0)
+      add(Math.abs(m.tiltDeg) >= 2.5 ? "high" : "medium",
+        "The dominant horizontal line is off by " + r1(Math.abs(m.tiltDeg)) + " degrees",
+        "Rotate " + r1(Math.abs(m.tiltDeg)) + " degrees " + (m.tiltDeg > 0 ? "anticlockwise" : "clockwise") + " and re-crop",
+        "A tilted horizon is the most common tell of an unedited phone snap");
+    if (m.clutterRatio > 1.25) add(m.clutterRatio > 1.6 ? "high" : "medium",
+      "Busy background - edge energy outside the centre is " + r1(m.clutterRatio) + "x the centre",
+      "Crop tighter, step closer, or shift so the subject sits against a plainer area",
+      "A cluttered background competes with your subject for the half-second you get");
+    if (m.deadCentre < 0.05 && m.subjectShare < 0.3) add("low",
+      "The subject sits dead centre at " + Math.round(m.centroid.x * 100) + "%/" + Math.round(m.centroid.y * 100) + "% while filling only " + pct(m.subjectShare),
+      "Recompose so it lands near a third line - around 33% or 67% across",
+      "Centre framing with a small subject reads as a snapshot rather than a considered shot");
+    if (m.subjectShare < 0.10) add("medium", "The subject occupies just " + pct(m.subjectShare) + " of the frame",
+      "Crop in or move closer until it fills 20-40%", "On a phone the whole image is about 4cm wide - small subjects vanish");
+    if (m.colorfulness < 22) add("low", "Muted colour - colourfulness scores " + Math.round(m.colorfulness) + " where vivid frames pass 60",
+      "Lift saturation or vibrance modestly, or shoot in warmer light", "Colour is a large part of what makes a thumbnail stop a scroll");
+    need.forEach((ar) => {
+      const loss = cropLoss(m.aspect, ASPECTS[ar]);
+      if (loss > 0.18) {
+        const plats = Object.keys(PLATFORMS).filter((k) => state.platforms.has(k) && PLATFORMS[k].aspects.includes(ar)).map((k) => PLATFORMS[k].label);
+        add(loss > 0.35 ? "high" : "medium",
+          "Cropping to " + ar + " for " + list(plats) + " throws away " + pct(loss) + " of the frame (it is " + m.aspectLabel + ")",
+          "Use the ready-made " + ar + " crop below, or reshoot framing for " + ar + " with room at the edges",
+          "Every platform recrops for you if you don't, and it will not choose kindly");
+      }
+    });
+    if (state.platforms.has("tiktok")) add("low",
+      "Text safe zones on TikTok: the top 12% and bottom 20% get covered by the interface",
+      "Keep any overlay text inside the middle 68% of the 9:16 frame",
+      "Text under the caption bar or username is simply unreadable");
+    const order = { high: 0, medium: 1, low: 2 };
+    out.sort((x, y) => order[x.impact] - order[y.impact]);
+    return full ? out : out.slice(0, 3);
+  };
+
+  const others = A.filter((a) => a.id !== winner.id).map((a) => {
+    const items = forAsset(a, false);
+    const d = state.compare.differentiators.find((x) => x.id === a.id);
+    let couldWin = "";
+    if (d && d.edge) {
+      const fixable = items.find((i) => /tilt|degrees|crop|Busy background|dead centre|clipped|dark|bright|Flat contrast/i.test(i.problem));
+      if (fixable) couldWin = "This one already beats the pick on one measure - " + d.edge + ". Fix the " +
+        fixable.problem.split(" - ")[0].toLowerCase() + " and it becomes the better post.";
+    }
+    return { id: a.id, items, couldWin };
+  });
+  return { winnerId: winner.id, winner: forAsset(winner, true), others, aspects: need };
+}
+
+/* --------------------- writing brief (the no-key path) --------------------- */
+function buildBrief() {
+  const winner = state.assets.find((a) => a.id === (state.chosenId || state.compare.winnerId));
+  const m = winner.m;
+  return [...state.platforms].map((k) => {
+    const c = PLATFORMS[k];
+    return {
+      platform: k,
+      assetId: winner.id,
+      lines: [
+        "Caption length: " + c.captionRule,
+        "Hashtags: " + c.hashtagRule,
+        "Tone: " + c.toneRule,
+        "Platform quirk: " + c.extras,
+        "Crop: " + c.aspects.join(" or ") + " (this photo is " + m.aspectLabel + ", losing " +
+          pct(Math.min(...c.aspects.map((a) => cropLoss(m.aspect, ASPECTS[a])))) + " at best)",
+        "Palette to echo in any graphics: " + m.colors.slice(0, 3).map((x) => x.name).join(", "),
+        "Alt text should describe what is visible - the measurements here cannot tell you the subject",
+        "Timing: post when your own audience is active. Any figure this page invented would be a guess dressed as data."
+      ]
+    };
+  });
+}
+
+/* =========================================================================
+   Optional caption layer - two providers doing the same job.
+   Nothing above this point needs a key or a network connection.
+   ========================================================================= */
+
+/** Re-encode from the retained original to fit a provider's inline-image budget. */
+function encodeFor(asset, p) {
+  let edge = p.imageEdge, q = p.imageQuality;
+  for (let i = 0; i < 8; i++) {
+    const s = Math.min(1, edge / Math.max(asset.image.naturalWidth, asset.image.naturalHeight));
+    const w = Math.max(64, Math.round(asset.image.naturalWidth * s));
+    const h = Math.max(64, Math.round(asset.image.naturalHeight * s));
+    const c = document.createElement("canvas"); c.width = w; c.height = h;
+    c.getContext("2d").drawImage(asset.image, 0, 0, w, h);
+    const url = c.toDataURL("image/jpeg", q);
+    const b64 = url.slice(url.indexOf(",") + 1);
+    if (b64.length * 0.75 <= p.maxImageBytes) return b64;
+    if (q > 0.45) q -= 0.12; else edge = Math.round(edge * 0.8);
+  }
+  return null;
+}
+
+/** Models without enforced output shapes wrap JSON in prose or fences - dig it out. */
+function extractJson(text) {
+  let t = String(text).trim();
+  const fence = t.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (fence) t = fence[1].trim();
+  const a = t.indexOf("{"), b = t.lastIndexOf("}");
+  if (a < 0 || b <= a) throw new Error("no JSON object in the response");
+  return JSON.parse(t.slice(a, b + 1));
+}
+
+/** A thrown fetch on a cross-origin POST almost always means CORS, not "offline". */
+const netError = (host) => new Error(
+  "The browser could not reach " + host + ". Either you are offline, or " + host + " refuses cross-origin " +
+  "requests from a page (CORS). If it is CORS, that provider simply cannot be called from a static file - " +
+  "switch provider, or put a small proxy of your own in front of it.");
+
+function apiError(who, status, msg) {
+  if (status === 401 || status === 403) return new Error(who + " rejected the key (" + status + "). Check it was pasted whole.");
+  if (status === 402) return new Error(who + " reports no credit left (402).");
+  if (status === 429) return new Error(who + " rate-limited you, or the free credits are used up (429).");
+  return new Error(who + " API error " + status + ": " + String(msg).slice(0, 200));
+}
+
+async function callAnthropic(asset, userText) {
+  const p = PROVIDERS.anthropic;
+  const b64 = encodeFor(asset, p);
+  if (!b64) throw new Error("Could not encode the photo small enough to send.");
+  let res;
+  try {
+    res = await fetch(p.url, { method: "POST", headers: {
+      "content-type": "application/json", "x-api-key": state.keys.anthropic,
+      "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true"
+    }, body: JSON.stringify({
+      model: curModel(), max_tokens: 3000, thinking: { type: "adaptive" },
+      output_config: { format: { type: "json_schema", schema: WRITE_SCHEMA } },
+      messages: [{ role: "user", content: [
+        { type: "image", source: { type: "base64", media_type: "image/jpeg", data: b64 } },
+        { type: "text", text: userText }
+      ] }]
+    }) });
+  } catch (_) { throw netError("api.anthropic.com"); }
+  const text = await res.text();
+  let json = null; try { json = JSON.parse(text); } catch (_) {}
+  if (!res.ok) throw apiError("Anthropic", res.status, (json && json.error && json.error.message) || text);
+  if (json.usage) { state.usage.input += json.usage.input_tokens || 0; state.usage.output += json.usage.output_tokens || 0; paintTokens(); }
+  if (json.stop_reason === "refusal") throw new Error("The model declined this request.");
+  const blk = (json.content || []).find((x) => x.type === "text");
+  if (!blk) throw new Error("The model returned no text.");
+  return blk.text;
+}
+
+async function callNvidia(asset, userText) {
+  const p = PROVIDERS.nvidia;
+  const b64 = encodeFor(asset, p);
+  if (!b64) throw new Error("Could not shrink the photo under NVIDIA's inline image limit - try a smaller original.");
+  let res;
+  try {
+    res = await fetch(p.url, { method: "POST", headers: {
+      "content-type": "application/json", "accept": "application/json",
+      "authorization": "Bearer " + state.keys.nvidia
+    }, body: JSON.stringify({
+      model: curModel(), max_tokens: 2048, temperature: 0.6, top_p: 0.9, stream: false,
+      messages: [{ role: "user", content: [
+        { type: "text", text: userText },
+        { type: "image_url", image_url: { url: "data:image/jpeg;base64," + b64 } }
+      ] }]
+    }) });
+  } catch (_) { throw netError("integrate.api.nvidia.com"); }
+  const text = await res.text();
+  let json = null; try { json = JSON.parse(text); } catch (_) {}
+  if (!res.ok) {
+    if (res.status === 413) throw new Error("NVIDIA rejected the image as too large even after shrinking. Use a smaller photo.");
+    const msg = (json && (json.detail || json.message || (json.error && (json.error.message || json.error)))) || text;
+    throw apiError("NVIDIA", res.status, typeof msg === "string" ? msg : JSON.stringify(msg));
+  }
+  const u = json.usage;
+  if (u) { state.usage.input += u.prompt_tokens || 0; state.usage.output += u.completion_tokens || 0; paintTokens(); }
+  const msg = json.choices && json.choices[0] && json.choices[0].message;
+  const out = msg && msg.content;
+  if (!out) throw new Error("NVIDIA returned no message content.");
+  return typeof out === "string" ? out : out.map((x) => x.text || "").join("");
+}
+
+const S = {
+  obj: (p) => ({ type: "object", additionalProperties: false, required: Object.keys(p), properties: p }),
+  str: (d) => ({ type: "string", description: d }),
+  arr: (i, d) => ({ type: "array", items: i, description: d }),
+  enm: (v, d) => ({ type: "string", enum: v, description: d })
+};
+const WRITE_SCHEMA = S.obj({
+  captions: S.arr(S.obj({
+    angle: S.enm(["story-led", "value-led", "question-led"]),
+    text: S.str("ready to paste"),
+    rationale: S.str("why this angle fits")
+  }), "exactly three, one per angle"),
+  hashtags: S.obj({ broad: S.arr(S.str()), niche: S.arr(S.str()), micro: S.arr(S.str()), note: S.str() }),
+  altText: S.str("accessibility alt text describing what is visible"),
+  subject: S.str("what the photo is actually of, in a few words")
+});
+
+function validateWrite(o) {
+  const e = [];
+  if (!Array.isArray(o.captions) || o.captions.length !== 3) e.push("captions must contain exactly 3 items");
+  else o.captions.forEach((c, i) => {
+    if (!c.text || !c.text.trim()) e.push("captions[" + i + "].text is empty");
+    if (!["story-led", "value-led", "question-led"].includes(c.angle)) e.push("captions[" + i + "].angle invalid");
+  });
+  const seen = new Set((o.captions || []).map((c) => c.angle));
+  if (seen.size !== 3) e.push("the three captions must use three different angles");
+  if (!o.altText || !String(o.altText).trim()) e.push("altText is empty");
+  // Smaller models sometimes hand back "#a #b" instead of ["#a","#b"] - both are recoverable.
+  const tierOk = (v) => Array.isArray(v) || typeof v === "string" || v == null;
+  if (!o.hashtags || typeof o.hashtags !== "object") e.push("hashtags must be an object with broad, niche and micro");
+  else if (!["broad", "niche", "micro"].every((k) => tierOk(o.hashtags[k])))
+    e.push("hashtags.broad, .niche and .micro must each be an array of tags");
+  return e;
+}
+
+/* Providers without enforced output shapes need the contract spelled out in the prompt. */
+const JSON_SHAPE =
+`Reply with one JSON object and nothing else - no preamble, no commentary, no markdown fences. Exact shape:
+{
+  "subject": "what the photo is actually of, a few words",
+  "captions": [
+    {"angle": "story-led",    "text": "...", "rationale": "..."},
+    {"angle": "value-led",    "text": "...", "rationale": "..."},
+    {"angle": "question-led", "text": "...", "rationale": "..."}
+  ],
+  "hashtags": {"broad": ["#a"], "niche": ["#b"], "micro": ["#c"], "note": "why this mix and count"},
+  "altText": "accessibility alt text describing what is visible"
+}
+Each of the three angle values must appear exactly once.`;
+
+function writePrompt(platformKey) {
+  const cfg = PLATFORMS[platformKey];
+  const a = state.assets.find((x) => x.id === (state.chosenId || state.compare.winnerId));
+  const m = a.m;
+  return `Write the ${cfg.label} post for this photo.
+
+${state.niche ? "Niche: " + state.niche : "Niche: not stated - infer it from the photo"}
+${state.goal ? "Goal: " + state.goal : "Goal: not stated"}
+
+Measured properties of this photo (these are computed from the pixels - trust them over your own impression):
+- ${m.w} x ${m.h}, ${m.aspectLabel}
+- average brightness ${pct(m.meanLum)}, ${pct(m.clipWhite)} of pixels blown out
+- dominant colours: ${m.colors.map((c) => c.name + " " + pct(c.share)).join(", ")}
+- subject fills ${pct(m.subjectShare)} of the frame, centred ${Math.round(m.centroid.x * 100)}% across and ${Math.round(m.centroid.y * 100)}% down
+- focus measure ${r1(m.focus)}, contrast ${r1(m.contrast * 100)} points, colourfulness ${Math.round(m.colorfulness)}
+
+${cfg.label} rules:
+- Caption length: ${cfg.captionRule}
+- Hashtags: ${cfg.hashtagRule}
+- Tone: ${cfg.toneRule}
+- Extras: ${cfg.extras}
+
+Three captions with distinct angles: story-led, value-led, question-led. Each ready to paste, each with a one-line rationale.
+Group hashtags into broad, niche and micro tiers and note why the mix and count fit the rule.
+Describe only what is visible. Do not invent view counts, timing data or performance predictions.${prov().structuredOutputs ? "" : "\n\n" + JSON_SHAPE}`;
+}
+
+async function writeFor(platformKey) {
+  const a = state.assets.find((x) => x.id === (state.chosenId || state.compare.winnerId));
+  const call = state.provider === "anthropic" ? callAnthropic : callNvidia;
+  const base = writePrompt(platformKey);
+  let last = null;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const text = attempt === 0 ? base
+      : base + "\n\nYour previous reply failed validation:\n- " + last.join("\n- ") + "\nReturn only the corrected JSON object.";
+    const raw = await call(a, text);
+    let parsed;
+    try { parsed = extractJson(raw); } catch (e) { last = [e.message]; continue; }
+    const errs = validateWrite(parsed);
+    if (!errs.length) return normaliseWrite(parsed);
+    last = errs;
+  }
+  throw new Error(prov().label + " could not produce valid captions after a retry: " + last.join("; "));
+}
+
+/** Tolerate the shape drift smaller models produce once it has passed validation. */
+function normaliseWrite(o) {
+  const tags = (v) => (Array.isArray(v) ? v : typeof v === "string" ? v.split(/[\s,]+/) : [])
+    .map((t) => String(t).trim()).filter(Boolean).map((t) => t.startsWith("#") ? t : "#" + t);
+  return {
+    subject: String(o.subject || "").trim() || "not stated by the model",
+    altText: String(o.altText).trim(),
+    captions: o.captions.map((c) => ({ angle: c.angle, text: String(c.text).trim(), rationale: String(c.rationale || "").trim() })),
+    hashtags: {
+      broad: tags(o.hashtags.broad), niche: tags(o.hashtags.niche), micro: tags(o.hashtags.micro),
+      note: String(o.hashtags.note || "").trim()
+    }
+  };
+}
+
+/* =========================================================================
+   File intake
+   ========================================================================= */
+async function sniff(file) {
+  const head = new Uint8Array(await file.slice(0, 16).arrayBuffer());
+  const ascii = (s, e) => String.fromCharCode.apply(null, Array.from(head.slice(s, e)));
+  if (head[0] === 0xff && head[1] === 0xd8 && head[2] === 0xff) return "image/jpeg";
+  if (head[0] === 0x89 && ascii(1, 4) === "PNG") return "image/png";
+  if (ascii(0, 4) === "RIFF" && ascii(8, 12) === "WEBP") return "image/webp";
+  if (ascii(4, 8) === "ftyp") return "video/mp4";
+  return null;
+}
+async function sha256(buf) {
+  const d = await crypto.subtle.digest("SHA-256", buf);
+  return Array.from(new Uint8Array(d)).map((x) => x.toString(16).padStart(2, "0")).join("");
+}
+const fileMsgs = [];
+function logFile(kind, msg) { fileMsgs.push({ kind, msg }); paintFileLog(); }
+function paintFileLog() {
+  $("filelog").innerHTML = fileMsgs.map((m) =>
+    '<div class="notice ' + (m.kind === "error" ? "danger" : "info") + '">' + esc(m.msg) + "</div>").join("");
+}
+
+async function addFiles(list) {
+  fileMsgs.length = 0;
+  for (const file of Array.from(list)) {
+    if (state.assets.length >= MAX_PHOTOS) { logFile("error", "Skipped " + file.name + " - the cap is " + MAX_PHOTOS + " photos."); continue; }
+    if (file.size > MAX_BYTES) { logFile("error", "Skipped " + file.name + " - " + (file.size / 1048576).toFixed(1) + " MB is over the 15 MB limit."); continue; }
+    const mime = await sniff(file);
+    if (mime && mime.startsWith("video/")) { logFile("error", "Skipped " + file.name + " - photos only. Video needs ffmpeg, which browsers don't have."); continue; }
+    if (!mime) { logFile("error", "Skipped " + file.name + " - the contents are not a JPEG, PNG or WebP whatever the extension says."); continue; }
+    const bytes = await file.arrayBuffer();
+    const hash = await sha256(bytes);
+    if (state.assets.some((a) => a.hash === hash)) { logFile("error", "Skipped " + file.name + " - byte-identical to a photo already added. Near-identical is welcome; exact duplicates add nothing."); continue; }
+    let prep; try { prep = await prepare(file); } catch (_) { logFile("error", "Skipped " + file.name + " - could not decode it."); continue; }
+    state.assets.push({ id: "p" + (state.assets.length + 1), name: file.name, hash, ...prep, m: null, error: null });
+  }
+  paintThumbs(); refreshRun();
+}
+
+function prepare(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      // Keep only the decoded original. Anything that gets transmitted is re-encoded
+      // per provider by encodeFor(), and that canvas round-trip is what drops EXIF/GPS.
+      resolve({ previewUrl: url, image: img, origW: img.naturalWidth, origH: img.naturalHeight });
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("decode failed")); };
+    img.src = url;
+  });
+}
+
+function removeAsset(id) {
+  const i = state.assets.findIndex((a) => a.id === id);
+  if (i < 0) return;
+  URL.revokeObjectURL(state.assets[i].previewUrl);
+  state.assets.splice(i, 1); paintThumbs(); refreshRun();
+}
+function moveAsset(id, d) {
+  const i = state.assets.findIndex((a) => a.id === id), j = i + d;
+  if (i < 0 || j < 0 || j >= state.assets.length) return;
+  const [a] = state.assets.splice(i, 1); state.assets.splice(j, 0, a); paintThumbs();
+}
+function paintThumbs() {
+  const el = $("thumbs");
+  el.innerHTML = state.assets.map((a, i) => `
+    <div class="thumb${state.compare && state.compare.winnerId === a.id ? " win" : ""}${state.chosenId === a.id ? " chosen" : ""}">
+      <img src="${a.previewUrl}" alt="Preview of ${esc(a.name)}">
+      <div class="bar"><span class="nm" title="${esc(a.name)}">${i + 1}. ${esc(a.name)}</span>
+        <span><button class="tiny" data-mv="-1" data-id="${a.id}" aria-label="Move earlier"${i === 0 ? " disabled" : ""}>&#8593;</button>
+        <button class="tiny" data-mv="1" data-id="${a.id}" aria-label="Move later"${i === state.assets.length - 1 ? " disabled" : ""}>&#8595;</button>
+        <button class="tiny" data-rm="${a.id}" aria-label="Remove">&#215;</button></span></div>
+      <div class="bar faint" style="padding-top:0">${a.origW}&#215;${a.origH}${a.m ? " &middot; " + esc(a.m.aspectLabel) : ""}</div>
+    </div>`).join("");
+  el.querySelectorAll("[data-rm]").forEach((b) => b.onclick = () => removeAsset(b.dataset.rm));
+  el.querySelectorAll("[data-mv]").forEach((b) => b.onclick = () => moveAsset(b.dataset.id, Number(b.dataset.mv)));
+}
+
+/* ============================== stepper ============================== */
+let steps = [];
+function setSteps(l) { steps = l.map((s) => ({ ...s, status: "idle" })); paintSteps(); }
+function step(key, status, label) {
+  const s = steps.find((x) => x.key === key); if (!s) return;
+  s.status = status; if (label) s.label = label; paintSteps();
+}
+function paintSteps() {
+  $("steplist").innerHTML = steps.map((s) =>
+    `<li><span class="dot ${s.status === "running" ? "run" : s.status === "done" ? "done" : s.status === "failed" ? "fail" : s.status === "skipped" ? "skip" : ""}"></span>
+     <span class="${s.status === "idle" ? "faint" : ""}">${esc(s.label)}</span></li>`).join("");
+}
+function paintTokens() {
+  $("tokenmeter").textContent = (state.usage.input || state.usage.output)
+    ? prov().label + " tokens: " + state.usage.input.toLocaleString() + " in / " + state.usage.output.toLocaleString() + " out" : "";
+}
+const yieldUI = () => new Promise((r) => setTimeout(r, 0));
+
+/* ============================== pipeline ============================== */
+async function run() {
+  if (state.running) return;
+  state.running = true; state.done = false;
+  state.compare = null; state.recs = null; state.writing = null; state.chosenId = null;
+  state.usage = { input: 0, output: 0 };
+  state.assets.forEach((a) => { a.m = null; a.error = null; });
+  $("run").disabled = true; $("results").classList.add("hide");
+  $("runerr").classList.add("hide"); $("progress").classList.remove("hide");
+  const withAI = state.useAI && curKey().length > 10;
+  setSteps([
+    { key: "measure", label: "Measuring photos" },
+    { key: "compare", label: "Comparing and picking" },
+    { key: "recs", label: "Building the fix list" },
+    { key: "write", label: withAI ? "Writing captions with " + prov().label : "Writing brief (captions off)" }
+  ]);
+  try {
+    for (let i = 0; i < state.assets.length; i++) {
+      const a = state.assets[i];
+      step("measure", "running", "Measuring photos (" + (i + 1) + " of " + state.assets.length + ")");
+      await yieldUI();
+      try { a.m = measure(a); } catch (e) { a.error = e.message; }
+    }
+    const ok = state.assets.filter((a) => a.m);
+    if (!ok.length) throw new Error("No photo could be measured.");
+    step("measure", "done", "Measured " + ok.length + " photo" + (ok.length === 1 ? "" : "s") +
+      (state.assets.length - ok.length ? " (" + (state.assets.length - ok.length) + " failed)" : ""));
+
+    step("compare", "running");
+    await yieldUI();
+    state.compare = compareAll();
+    state.chosenId = state.compare.winnerId;
+    step("compare", "done", state.compare.similarity
+      ? "Compared " + ok.length + " photos - " + state.compare.similarity.label
+      : "Single photo, nothing to compare");
+
+    step("recs", "running"); await yieldUI();
+    state.recs = buildRecs();
+    step("recs", "done", "Built the fix list");
+
+    if (withAI) {
+      const keys = [...state.platforms];
+      state.writing = {};
+      for (let i = 0; i < keys.length; i++) {
+        step("write", "running", "Writing captions with " + prov().label + " (" + (i + 1) + " of " + keys.length + ": " + PLATFORMS[keys[i]].label + ")");
+        state.writing[keys[i]] = await writeFor(keys[i]);
+      }
+      step("write", "done", "Wrote posts for " + keys.length + " platform" + (keys.length === 1 ? "" : "s"));
+    } else {
+      state.writing = null;
+      step("write", "skipped", "Writing brief prepared - add a key if you want captions written for you");
+    }
+
+    render();
+    state.done = true;
+    $("results").classList.remove("hide");
+    $("results").scrollIntoView({ behavior: "smooth", block: "start" });
+  } catch (e) {
+    steps.forEach((s) => { if (s.status === "running") s.status = "failed"; });
+    paintSteps();
+    $("runerr").className = "notice danger";
+    $("runerr").innerHTML = "<strong>Run stopped.</strong> " + esc(e.message);
+  } finally { state.running = false; refreshRun(); }
+}
+
+/* =============================== crops =============================== */
+function cropOf(asset, ratioKey) {
+  const t = ASPECTS[ratioKey], img = asset.image, iw = img.naturalWidth, ih = img.naturalHeight;
+  let cw = iw, ch = Math.round(iw / t);
+  if (ch > ih) { ch = ih; cw = Math.round(ih * t); }
+  // bias the crop toward the measured subject instead of blind centre
+  const c = asset.m ? asset.m.centroid : { x: .5, y: .5 };
+  const sx = clamp(Math.round(c.x * iw - cw / 2), 0, iw - cw);
+  const sy = clamp(Math.round(c.y * ih - ch / 2), 0, ih - ch);
+  const cv = document.createElement("canvas"); cv.width = cw; cv.height = ch;
+  cv.getContext("2d").drawImage(img, sx, sy, cw, ch, 0, 0, cw, ch);
+  return { url: cv.toDataURL("image/jpeg", 0.92), w: cw, h: ch, sx, sy };
+}
+
+/* ============================== rendering ============================== */
+function copyBtn(text, label) {
+  const id = "c" + Math.random().toString(36).slice(2, 9);
+  window.__copy = window.__copy || {}; window.__copy[id] = text;
+  return '<button class="tiny" data-copy="' + id + '">' + (label || "Copy") + "</button>";
+}
+function wireCopies(root) {
+  root.querySelectorAll("[data-copy]").forEach((b) => b.onclick = async () => {
+    try { await navigator.clipboard.writeText(window.__copy[b.dataset.copy]);
+      const o = b.textContent; b.textContent = "Copied"; setTimeout(() => { b.textContent = o; }, 1200);
+    } catch (_) { b.textContent = "Press Ctrl+C"; }
+  });
+}
+const nameOf = (id) => { const a = state.assets.find((x) => x.id === id); return a ? a.name : id; };
+const meter = (s) => '<span class="meter ' + (s >= 7.5 ? "g" : s < 5 ? "b" : "") + '"><i style="width:' + (s * 10) + '%"></i></span> <b>' + r1(s) + "</b>";
+
+function renderVerdict() {
+  const c = state.compare, A = state.assets.filter((a) => a.m);
+  const w = state.assets.find((a) => a.id === (state.chosenId || c.winnerId));
+  let h = '<div class="card"><h2>Which photo to post</h2>';
+  h += '<div class="notice ok"><strong>Recommendation:</strong> ' + esc(c.recommendation) + "</div>";
+  if (c.similarity) h += '<p class="small">These are <strong>' + esc(c.similarity.label) +
+    '</strong> - the largest perceptual distance in the set is ' + c.maxDist + ' of 64 bits. ' +
+    (c.similarity.key === "near-identical" || c.similarity.key === "variations-of-one-shot"
+      ? "That is the case this tool is built for: the differences are small, so they are measured rather than eyeballed."
+      : "They are different enough that subject matter matters as much as technical quality, and measurements cannot judge subject matter.") + "</p>";
+  h += '<div class="winbox"><img src="' + w.previewUrl + '" alt="Chosen photo">' +
+    '<div style="flex:1; min-width:230px"><span class="badge good">' +
+    (w.id === c.winnerId ? "Best measured" : "Your override") + "</span> <strong>" + esc(w.name) + "</strong>" +
+    "<p style=\"margin-top:6px\">" + esc(c.reason) + "</p>" +
+    (c.runnerUp ? '<p class="small muted">Runner-up: ' + esc(nameOf(c.runnerUp.id)) + ", behind by " + c.runnerUp.gap + " points.</p>" : "") +
+    "</div></div>";
+
+  if (c.regions && c.regions.length) {
+    h += '<h3 style="margin-top:16px">What actually changed between the frames</h3>' +
+      '<p class="small">Each frame compared to ' + esc(nameOf(c.winnerId)) + ' region by region, on a 32x32 luma grid.</p><div class="scroll-x"><table>' +
+      "<thead><tr><th>Photo</th><th>Region</th><th>Change</th><th>Brighter</th><th>Sharper</th></tr></thead><tbody>";
+    c.regions.forEach((r) => {
+      if (!r.changed.length) { h += "<tr><td>" + esc(nameOf(r.id)) + '</td><td colspan="4" class="faint">no region differs measurably - these frames are all but identical</td></tr>'; return; }
+      r.changed.forEach((x, i) => {
+        const who = (v) => v === "winner" ? esc(nameOf(c.winnerId)) : v === "other" ? esc(nameOf(r.id)) : '<span class="faint">tie</span>';
+        h += "<tr><td>" + (i === 0 ? esc(nameOf(r.id)) : "") + "</td><td>" + esc(x.region) +
+          '</td><td class="num">' + r1(x.delta * 100) + "%</td><td>" + who(x.brighter) + "</td><td>" + who(x.sharper) + "</td></tr>";
+      });
+    });
+    h += "</tbody></table></div>";
+  }
+
+  h += '<h3 style="margin-top:16px">What each frame does better and worse</h3><div class="scroll-x"><table>' +
+    "<thead><tr><th>Photo</th><th>Its edge</th><th>Its weakness</th></tr></thead><tbody>" +
+    c.differentiators.map((d) => "<tr><td>" + esc(nameOf(d.id)) + "</td><td>" +
+      (d.edge ? esc(d.edge) : '<span class="faint">nothing it leads on</span>') + "</td><td>" +
+      (d.flaw ? esc(d.flaw) : '<span class="faint">nothing it trails on</span>') + "</td></tr>").join("") +
+    "</tbody></table></div>";
+
+  h += '<h3 style="margin-top:16px">Every measurement, every photo</h3><div class="scroll-x"><table><thead><tr><th>Dimension</th>' +
+    A.map((a) => "<th>" + esc(a.name) + "</th>").join("") + "</tr></thead><tbody>" +
+    c.dims.map(([label, k]) => "<tr><td>" + esc(label) + "</td>" +
+      A.map((a) => '<td class="num">' + meter(a.m.scores[k]) + "</td>").join("") + "</tr>").join("") +
+    '<tr><td class="muted">Focus measure (raw)</td>' + A.map((a) => '<td class="num muted">' + r1(a.m.focus) + "</td>").join("") + "</tr>" +
+    '<tr><td class="muted">Mean brightness</td>' + A.map((a) => '<td class="num muted">' + pct(a.m.meanLum) + "</td>").join("") + "</tr>" +
+    '<tr><td class="muted">Blown / crushed pixels</td>' + A.map((a) => '<td class="num muted">' + pct(a.m.clipWhite) + " / " + pct(a.m.clipBlack) + "</td>").join("") + "</tr>" +
+    '<tr><td class="muted">Horizon tilt</td>' + A.map((a) => '<td class="num muted">' + (a.m.tiltDeg != null && a.m.tiltConf > .3 ? r1(a.m.tiltDeg) + "&deg;" : "n/a") + "</td>").join("") + "</tr>" +
+    '<tr><td class="muted">Subject share</td>' + A.map((a) => '<td class="num muted">' + pct(a.m.subjectShare) + "</td>").join("") + "</tr>" +
+    '<tr><td class="muted">Background clutter</td>' + A.map((a) => '<td class="num muted">' + r1(a.m.clutterRatio) + "x</td>").join("") + "</tr>" +
+    '<tr><td class="muted">Colourfulness</td>' + A.map((a) => '<td class="num muted">' + Math.round(a.m.colorfulness) + "</td>").join("") + "</tr>" +
+    '<tr><td class="muted">Dominant colours</td>' + A.map((a) => '<td class="muted">' + a.m.colors.slice(0, 3).map((x) => esc(x.name)).join(", ") + "</td>").join("") + "</tr>" +
+    "</tbody></table></div>";
+
+  h += '<h3 style="margin-top:16px">Per-platform pick</h3><div class="scroll-x"><table>' +
+    "<thead><tr><th>Platform</th><th>Pick</th><th>Score</th><th>Crop loss</th></tr></thead><tbody>" +
+    c.perPlatform.map((p) => "<tr><td>" + PLATFORMS[p.platform].label + "</td><td>" + esc(nameOf(p.assetId)) +
+      (p.differs ? ' <span class="badge accent">differs</span>' : "") + '</td><td class="num">' + meter(p.score.total) +
+      '</td><td class="num">' + pct(p.score.cropLoss) + "</td></tr>").join("") + "</tbody></table></div>";
+
+  h += '<h3 style="margin-top:16px">Override</h3><p class="small">The weighting is a judgment call. Pick another photo and everything below rebuilds around it.</p><div class="row">' +
+    A.map((a) => '<button class="tiny' + (state.chosenId === a.id ? " primary" : "") + '" data-choose="' + a.id + '">' +
+      esc(a.name) + (a.id === c.winnerId ? " (measured best)" : "") + "</button>").join("") +
+    '</div><div id="regenstatus" class="small faint" style="margin-top:6px"></div>';
+  return h + "</div>";
+}
+
+function renderPosts() {
+  const keys = [...state.platforms];
+  let h = '<div class="card"><h2>Posts</h2><div class="tabs" role="tablist">' +
+    keys.map((k, i) => '<button role="tab" data-tab="' + k + '" aria-selected="' + (i === 0) + '">' + PLATFORMS[k].label + "</button>").join("") + "</div>";
+  const brief = state.writing ? null : buildBrief();
+  keys.forEach((k, i) => {
+    const cfg = PLATFORMS[k], a = state.assets.find((x) => x.id === (state.chosenId || state.compare.winnerId));
+    h += '<div data-panel="' + k + '"' + (i === 0 ? "" : ' class="hide"') + ">";
+    h += '<p class="small faint">For <strong>' + esc(a.name) + "</strong>.</p>";
+    if (state.writing) {
+      const o = state.writing[k];
+      h += '<p class="small muted">' + esc(prov().label) + " reads the photo as: " + esc(o.subject) + "</p>";
+      o.captions.forEach((c) => {
+        h += '<div class="block"><div class="head"><span><strong>' + esc(c.angle) + '</strong> <span class="faint small">' +
+          c.text.length + " chars</span></span>" + copyBtn(c.text) + '</div><div class="body"><pre class="copy">' +
+          esc(c.text) + '</pre><div class="small muted" style="margin-top:8px"><em>Why:</em> ' + esc(c.rationale) + "</div></div></div>";
+      });
+      const all = [...o.hashtags.broad, ...o.hashtags.niche, ...o.hashtags.micro];
+      h += '<div class="block"><div class="head"><span><strong>Hashtags</strong> <span class="faint small">' + all.length +
+        " tags</span></span>" + copyBtn(all.join(" "), "Copy all") + '</div><div class="body">' +
+        ["broad", "niche", "micro"].map((t) => '<div class="kv"><b>' + t + ":</b> " +
+          (o.hashtags[t].length ? esc(o.hashtags[t].join(" ")) : '<span class="faint">none</span>') + "</div>").join("") +
+        '<div class="small muted" style="margin-top:8px">' + esc(o.hashtags.note) + "</div></div></div>";
+      h += '<div class="block"><div class="head"><strong>Alt text</strong>' + copyBtn(o.altText) +
+        '</div><div class="body"><pre class="copy">' + esc(o.altText) + "</pre></div></div>";
+    } else {
+      const b = brief.find((x) => x.platform === k);
+      h += '<div class="block"><div class="head"><strong>Writing brief</strong>' +
+        copyBtn(b.lines.join("\n"), "Copy brief") + '</div><div class="body"><ul class="tight">' +
+        b.lines.map((l) => "<li>" + esc(l) + "</li>").join("") + "</ul>" +
+        '<p class="small faint" style="margin-bottom:0">No captions were generated because no key was supplied. ' +
+        "An empty brief beats an invented caption - write these yourself, or add a key above and re-run.</p></div></div>";
+    }
+    h += "</div>";
+  });
+  return h + "</div>";
+}
+
+function renderRecs() {
+  const r = state.recs;
+  const item = (x) => '<li><span class="imp-' + x.impact + '">' + x.impact.toUpperCase() + "</span> - <strong>" +
+    esc(x.problem) + "</strong><br>" + esc(x.fix) + '<br><span class="small muted">' + esc(x.why) + "</span></li>";
+  let h = '<div class="card"><h2>Improve the asset</h2><h3>' + esc(nameOf(r.winnerId)) + " - full list</h3>";
+  h += r.winner.length ? '<ul class="tight" style="padding-left:20px">' + r.winner.map(item).join("") + "</ul>"
+    : '<p class="small">Nothing measurable to fix - exposure, focus, tilt, clutter and framing are all inside their target bands.</p>';
+  r.others.forEach((o) => {
+    h += "<h3 style=\"margin-top:14px\">" + esc(nameOf(o.id)) + " - top fixes</h3>" +
+      (o.items.length ? '<ul class="tight" style="padding-left:20px">' + o.items.map(item).join("") + "</ul>"
+        : '<p class="small faint">Nothing measurable to fix.</p>') +
+      (o.couldWin ? '<div class="notice info"><strong>Could beat the pick:</strong> ' + esc(o.couldWin) + "</div>" : "");
+  });
+  const w = state.assets.find((a) => a.id === r.winnerId);
+  h += '<h3 style="margin-top:18px">Ready crops</h3><p class="small">Cut from the full-resolution original and centred on the measured subject, not blindly on the middle of the frame.</p>' +
+    '<div class="thumbs">' + r.aspects.map((ar) => {
+      const c = cropOf(w, ar);
+      const plats = Object.keys(PLATFORMS).filter((k) => state.platforms.has(k) && PLATFORMS[k].aspects.includes(ar)).map((k) => PLATFORMS[k].label).join(", ");
+      return '<div class="thumb"><img src="' + c.url + '" alt="' + ar + ' crop">' +
+        '<div class="bar"><span class="nm"><strong>' + ar + "</strong> " + c.w + "&#215;" + c.h + "</span>" +
+        '<a class="tiny" download="' + esc(w.name.replace(/\.[^.]+$/, "")) + "-" + ar.replace(":", "x") + '.jpg" href="' + c.url + '">Download</a></div>' +
+        '<div class="bar faint" style="padding-top:0">' + esc(plats) + " &middot; loses " + pct(cropLoss(w.m.aspect, ASPECTS[ar])) + "</div></div>";
+    }).join("") + "</div>";
+  return h + "</div>";
+}
+
+function render() {
+  const out = $("out");
+  out.innerHTML = renderVerdict() + renderPosts() + renderRecs();
+  wireCopies(out);
+  out.querySelectorAll("[role=tab]").forEach((t) => t.onclick = () => {
+    out.querySelectorAll("[role=tab]").forEach((x) => x.setAttribute("aria-selected", String(x === t)));
+    out.querySelectorAll("[data-panel]").forEach((p) => p.classList.toggle("hide", p.dataset.panel !== t.dataset.tab));
+  });
+  out.querySelectorAll("[data-choose]").forEach((b) => b.onclick = () => choose(b.dataset.choose));
+  paintThumbs();
+}
+
+async function choose(id) {
+  if (state.running || state.chosenId === id) return;
+  state.chosenId = id;
+  state.recs = buildRecs();
+  if (!state.writing) { render(); return; }
+  state.running = true;
+  const st = $("regenstatus"); const keys = [...state.platforms];
+  try {
+    for (let i = 0; i < keys.length; i++) {
+      if (st) st.textContent = "Rewriting for " + PLATFORMS[keys[i]].label + " (" + (i + 1) + " of " + keys.length + ")...";
+      state.writing[keys[i]] = await writeFor(keys[i]);
+    }
+    render();
+  } catch (e) { if (st) { st.className = "small"; st.style.color = "var(--bad)"; st.textContent = "Rewrite failed: " + e.message; } }
+  finally { state.running = false; }
+}
+
+/* ============================== export ============================== */
+function toMarkdown() {
+  const L = [], c = state.compare, A = state.assets.filter((a) => a.m);
+  L.push("# PostBoost report", "", "_Measured in-browser. This page stores nothing - this file is the only copy._", "");
+  L.push("**Platforms:** " + [...state.platforms].map((k) => PLATFORMS[k].label).join(", "));
+  if (state.goal) L.push("**Goal:** " + state.goal);
+  if (state.niche) L.push("**Niche:** " + state.niche);
+  L.push("", "## Recommendation", "", c.recommendation, "");
+  if (c.similarity) L.push("Set similarity: **" + c.similarity.label + "** (largest perceptual distance " + c.maxDist + "/64).", "");
+  L.push("### Why " + nameOf(state.chosenId || c.winnerId), "", c.reason, "");
+
+  if (c.regions && c.regions.length) {
+    L.push("### What changed between the frames", "", "| Photo | Region | Change | Brighter | Sharper |", "|---|---|---|---|---|");
+    c.regions.forEach((r) => r.changed.forEach((x) => {
+      const who = (v) => v === "winner" ? nameOf(c.winnerId) : v === "other" ? nameOf(r.id) : "tie";
+      L.push("| " + nameOf(r.id) + " | " + x.region + " | " + r1(x.delta * 100) + "% | " + who(x.brighter) + " | " + who(x.sharper) + " |");
+    }));
+    L.push("");
+  }
+  L.push("### Edge and weakness per frame", "", "| Photo | Its edge | Its weakness |", "|---|---|---|");
+  c.differentiators.forEach((d) => L.push("| " + nameOf(d.id) + " | " + (d.edge || "-") + " | " + (d.flaw || "-") + " |"));
+  L.push("");
+  L.push("### Scores", "", "| Dimension | " + A.map((a) => a.name).join(" | ") + " |", "|" + "---|".repeat(A.length + 1));
+  c.dims.forEach(([label, k]) => L.push("| " + label + " | " + A.map((a) => r1(a.m.scores[k])).join(" | ") + " |"));
+  L.push("| Focus measure (raw) | " + A.map((a) => r1(a.m.focus)).join(" | ") + " |");
+  L.push("| Mean brightness | " + A.map((a) => pct(a.m.meanLum)).join(" | ") + " |");
+  L.push("| Blown / crushed | " + A.map((a) => pct(a.m.clipWhite) + " / " + pct(a.m.clipBlack)).join(" | ") + " |");
+  L.push("| Horizon tilt | " + A.map((a) => a.m.tiltDeg != null && a.m.tiltConf > .3 ? r1(a.m.tiltDeg) + " deg" : "n/a").join(" | ") + " |");
+  L.push("| Subject share | " + A.map((a) => pct(a.m.subjectShare)).join(" | ") + " |");
+  L.push("| Background clutter | " + A.map((a) => r1(a.m.clutterRatio) + "x").join(" | ") + " |");
+  L.push("| Colourfulness | " + A.map((a) => Math.round(a.m.colorfulness)).join(" | ") + " |");
+  L.push("");
+  L.push("| Platform | Pick | Score | Crop loss |", "|---|---|---|---|");
+  c.perPlatform.forEach((p) => L.push("| " + PLATFORMS[p.platform].label + " | " + nameOf(p.assetId) +
+    (p.differs ? " (differs)" : "") + " | " + p.score.total + " | " + pct(p.score.cropLoss) + " |"));
+  L.push("");
+
+  [...state.platforms].forEach((k) => {
+    L.push("## " + PLATFORMS[k].label, "");
+    if (state.writing) {
+      const o = state.writing[k];
+      L.push("_" + prov().label + " reads the photo as: " + o.subject + "_", "");
+      o.captions.forEach((x) => L.push("### " + x.angle + " (" + x.text.length + " chars)", "", x.text, "", "_" + x.rationale + "_", ""));
+      L.push("**Hashtags**", "", "- broad: " + (o.hashtags.broad.join(" ") || "-"),
+        "- niche: " + (o.hashtags.niche.join(" ") || "-"), "- micro: " + (o.hashtags.micro.join(" ") || "-"), "", o.hashtags.note, "");
+      L.push("**Alt text:** " + o.altText, "");
+    } else {
+      const b = buildBrief().find((x) => x.platform === k);
+      L.push("_Writing brief - no captions were generated because no API key was supplied._", "");
+      b.lines.forEach((l) => L.push("- " + l));
+      L.push("");
+    }
+  });
+
+  const r = state.recs;
+  L.push("## Improve the asset", "", "### " + nameOf(r.winnerId) + " - full list", "");
+  r.winner.forEach((x) => L.push("- **" + x.impact.toUpperCase() + "** " + x.problem + " -> " + x.fix + " (" + x.why + ")"));
+  L.push("");
+  r.others.forEach((o) => {
+    L.push("### " + nameOf(o.id) + " - top fixes", "");
+    o.items.forEach((x) => L.push("- **" + x.impact.toUpperCase() + "** " + x.problem + " -> " + x.fix));
+    if (o.couldWin) L.push("", "> " + o.couldWin);
+    L.push("");
+  });
+  L.push("---", "", "Sharpness, exposure, contrast, colour, tilt, clutter, subject placement and near-duplicate distance are measured from the pixels. " +
+    "The 1-10 scores and the pick apply documented thresholds and per-platform weights to those numbers - a defensible heuristic, not ground truth.");
+  if (state.usage.input || state.usage.output)
+    L.push("", "Captions written by " + prov().label + " (" + curModel() + "). Tokens: " +
+      state.usage.input + " in / " + state.usage.output + " out.");
+  return L.join("\n");
+}
+
+/* ============================== teardown ============================== */
+function discardAll() {
+  state.assets.forEach((a) => URL.revokeObjectURL(a.previewUrl));
+  state.assets = []; state.compare = null; state.recs = null; state.writing = null;
+  state.chosenId = null; state.done = false; window.__copy = {};
+  $("out").innerHTML = ""; $("results").classList.add("hide"); $("progress").classList.add("hide");
+  paintThumbs(); refreshRun();
+}
+window.addEventListener("pagehide", () => state.assets.forEach((a) => URL.revokeObjectURL(a.previewUrl)));
+window.addEventListener("beforeunload", (e) => { if (state.done || state.running) { e.preventDefault(); e.returnValue = ""; } });
+
+/* =============================== wiring =============================== */
+function refreshRun() {
+  const missing = [];
+  if (!state.assets.length) missing.push("at least one photo");
+  if (!state.platforms.size) missing.push("at least one platform");
+  // If captions are switched on, don't quietly run without them - ask for the key.
+  if (state.useAI && curKey().length <= 10) missing.push("your " + prov().label + " key (or untick captions)");
+  $("run").disabled = missing.length > 0 || state.running;
+  $("runhint").textContent = state.running ? "Working..." : missing.length ? "Still need " + list(missing) + "." :
+    state.assets.length + " photo" + (state.assets.length === 1 ? "" : "s") + ", " + state.platforms.size +
+    " platform" + (state.platforms.size === 1 ? "" : "s") +
+    (state.useAI ? ", captions via " + prov().label + "." : ", captions off - nothing leaves this tab.");
+}
+$("platforms").innerHTML = Object.keys(PLATFORMS).map((k) =>
+  '<label class="chip"><input type="checkbox" value="' + k + '"> ' + PLATFORMS[k].label + "</label>").join("");
+$("platforms").querySelectorAll("input").forEach((cb) => cb.onchange = () => {
+  if (cb.checked) state.platforms.add(cb.value); else state.platforms.delete(cb.value);
+  cb.closest(".chip").classList.toggle("on", cb.checked);
+  refreshRun();
+});
+$("providers").innerHTML = Object.entries(PROVIDERS).map(([k, p]) =>
+  '<label class="chip" data-prov="' + k + '"><input type="radio" name="prov" value="' + k + '"' +
+  (k === state.provider ? " checked" : "") + "> " + p.label + ' <span class="faint">' + p.tag + "</span></label>").join("");
+
+function syncProvider() {
+  const p = prov();
+  $("providers").querySelectorAll("[data-prov]").forEach((el) => el.classList.toggle("on", el.dataset.prov === state.provider));
+  $("providernote").innerHTML = p.note;
+  $("keylabel").textContent = p.keyLabel;
+  $("apikey").placeholder = p.keyPlaceholder;
+  $("apikey").value = state.keys[state.provider];   // keys are kept per provider, not shared
+  $("model").innerHTML = p.models.map(([v, l]) =>
+    '<option value="' + v + '"' + (v === state.models[state.provider] ? " selected" : "") + ">" + l + "</option>").join("");
+  refreshRun();
+}
+$("providers").querySelectorAll("input[name=prov]").forEach((r) => r.onchange = () => {
+  state.provider = r.value; syncProvider();
+});
+$("useai").onchange = (e) => {
+  state.useAI = e.target.checked;
+  $("aifields").classList.toggle("hide", !state.useAI);
+  $("aitoggle").classList.toggle("on", state.useAI);
+  // Unticking means the keys are gone, not merely hidden.
+  if (!state.useAI) { state.keys.nvidia = ""; state.keys.anthropic = ""; $("apikey").value = ""; }
+  refreshRun();
+};
+$("apikey").oninput = (e) => { state.keys[state.provider] = e.target.value.trim(); refreshRun(); };
+$("model").onchange = (e) => { state.models[state.provider] = e.target.value; };
+syncProvider();
+$("goal").onchange = (e) => { state.goal = e.target.value; };
+$("niche").oninput = (e) => { state.niche = e.target.value.trim(); };
+$("pick").onclick = () => $("file").click();
+$("file").onchange = (e) => { addFiles(e.target.files); e.target.value = ""; };
+const drop = $("drop");
+["dragenter", "dragover"].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add("hot"); }));
+["dragleave", "drop"].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove("hot"); }));
+drop.addEventListener("drop", (e) => {
+  const files = Array.from(e.dataTransfer.files || []);
+  const imgs = files.filter((f) => !f.type.startsWith("video/"));
+  if (imgs.length < files.length) {
+    fileMsgs.length = 0;
+    logFile("error", "Video files were ignored - this is photos only. Kept the " + imgs.length + " image" + (imgs.length === 1 ? "" : "s") + ".");
+  }
+  addFiles(imgs);
+});
+$("run").onclick = run;
+$("export").onclick = () => {
+  const url = URL.createObjectURL(new Blob([toMarkdown()], { type: "text/markdown" }));
+  const a = document.createElement("a"); a.href = url; a.download = "postboost-report.md"; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+};
+$("discard").onclick = () => { if (confirm("Delete this report from memory? It cannot be recovered.")) discardAll(); };
+refreshRun();
+</script>
+</body>
+</html>
