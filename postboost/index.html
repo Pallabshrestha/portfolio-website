@@ -236,7 +236,7 @@ code { font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-si
   usually help; it does not promise reach.</p>
   <p><strong>Data policy.</strong> With captions off, nothing leaves your browser - there is no server behind this page.
   With captions on, the chosen photo and its measurements are sent to whichever provider you picked
-  (<code>integrate.api.nvidia.com</code> or <code>api.anthropic.com</code>); that is a real hop, and "we don't store it"
+  (Google, OpenAI, Anthropic or NVIDIA); that is a real hop, and "we don't store it"
   is a claim about this page, not about every provider in the chain. Their retention and training terms are theirs, not
   mine to promise - read them if the photos are sensitive. Nothing here writes to localStorage, sessionStorage,
   IndexedDB or cookies, ever.</p>
@@ -295,8 +295,52 @@ const GOAL_NUDGE = {
   follows:    { colour: .07, subject: .06, contrast: .02, sharp: -.05, light: -.05, clutter: -.05 }
 };
 
-/* ===================== caption providers (both optional) ===================== */
+/* ======================= caption providers (all optional) =======================
+   CORS behaviour below was checked by preflight, not assumed: Gemini and OpenAI
+   both permit calls from a page; NVIDIA does not and needs a relay.
+   ============================================================================== */
 const PROVIDERS = {
+  gemini: {
+    label: "Google Gemini",
+    tag: "free tier",
+    url: "https://generativelanguage.googleapis.com/v1beta/models/",
+    keyUrl: "https://aistudio.google.com/apikey",
+    keyLabel: "Google AI Studio API key",
+    keyPlaceholder: "AIza...",
+    keyPrefix: "AIza",
+    imageEdge: 1024, imageQuality: 0.8, maxImageBytes: 1500000,
+    structuredOutputs: false,
+    note: 'Free key from <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a>, ' +
+      'no card required. Verified by preflight: Gemini permits calls from this page, so unlike NVIDIA it needs no relay - ' +
+      'this is the free route that actually works. The free tier is capped per minute and per day rather than by a credit ' +
+      'balance, so it keeps working rather than running out. Model names move fast; if one returns 404, pick another.',
+    models: [
+      ["gemini-2.0-flash", "Gemini 2.0 Flash - fast, free tier"],
+      ["gemini-2.5-flash", "Gemini 2.5 Flash"],
+      ["gemini-1.5-flash", "Gemini 1.5 Flash - oldest, most widely enabled"],
+      ["gemini-1.5-pro", "Gemini 1.5 Pro - stronger, tighter limits"]
+    ]
+  },
+  openai: {
+    label: "OpenAI",
+    tag: "paid",
+    url: "https://api.openai.com/v1/chat/completions",
+    keyUrl: "https://platform.openai.com/api-keys",
+    keyLabel: "OpenAI API key",
+    keyPlaceholder: "sk-...",
+    keyPrefix: "sk-",
+    imageEdge: 1024, imageQuality: 0.8, maxImageBytes: 1500000,
+    structuredOutputs: false,
+    note: 'Keys at <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com</a>. ' +
+      'Verified by preflight: OpenAI permits calls from a page, so no relay is needed. Billed per token. Model names change ' +
+      'often and vary by account - if one is rejected, try another from the list.',
+    models: [
+      ["gpt-4o", "GPT-4o - vision, widely enabled"],
+      ["gpt-4o-mini", "GPT-4o mini - cheapest"],
+      ["gpt-4.1", "GPT-4.1"],
+      ["gpt-4.1-mini", "GPT-4.1 mini"]
+    ]
+  },
   nvidia: {
     label: "NVIDIA NIM",
     tag: "free credits, needs a relay",
@@ -343,10 +387,10 @@ const MAX_PHOTOS = 8, MAX_BYTES = 15 * 1024 * 1024, WORK_EDGE = 720;
 
 /* ================================ state ================================ */
 const state = {
-  // Anthropic is the default because it is the only provider that works with no relay.
-  useAI: false, provider: "anthropic", proxyUrl: "",
-  keys: { nvidia: "", anthropic: "" },
-  models: { nvidia: PROVIDERS.nvidia.models[0][0], anthropic: PROVIDERS.anthropic.models[0][0] },
+  // Gemini is the default: free tier, and preflight confirms it works from a page.
+  useAI: false, provider: "gemini", proxyUrl: "",
+  keys: Object.fromEntries(Object.keys(PROVIDERS).map((k) => [k, ""])),
+  models: Object.fromEntries(Object.entries(PROVIDERS).map(([k, p]) => [k, p.models[0][0]])),
   assets: [], platforms: new Set(), goal: "", niche: "", keyword: "", cta: "",
   drafts: {},          // per-platform edited caption text, keyed "<platform>:<index>"
   compare: null, recs: null, writing: null, chosenId: null,
@@ -1242,6 +1286,86 @@ async function callAnthropic(asset, userText) {
   return blk.text;
 }
 
+async function callOpenAI(asset, userText) {
+  const p = PROVIDERS.openai;
+  const b64 = encodeFor(asset, p);
+  if (!b64) throw new Error("Could not encode the photo small enough to send.");
+  const base = {
+    model: curModel(),
+    response_format: { type: "json_object" },
+    messages: [{ role: "user", content: [
+      { type: "text", text: userText },
+      { type: "image_url", image_url: { url: "data:image/jpeg;base64," + b64 } }
+    ] }]
+  };
+  // Newer OpenAI models reject max_tokens and want max_completion_tokens; older
+  // ones are the reverse. Try the current name, retry once if that is the complaint.
+  for (const cap of ["max_completion_tokens", "max_tokens"]) {
+    let res;
+    try {
+      res = await fetch(p.url, { method: "POST", headers: {
+        "content-type": "application/json", "authorization": "Bearer " + state.keys.openai
+      }, body: JSON.stringify({ ...base, [cap]: 2048 }) });
+    } catch (_) { throw netError("api.openai.com"); }
+    const text = await res.text();
+    let json = null; try { json = JSON.parse(text); } catch (_) {}
+    if (!res.ok) {
+      const msg = String((json && json.error && json.error.message) || text);
+      if (cap === "max_completion_tokens" && /max_completion_tokens|max_tokens|unsupported parameter/i.test(msg)) continue;
+      if (res.status === 404) throw new Error('OpenAI does not recognise the model "' + curModel() + '" on your account. Pick another.');
+      throw apiError("OpenAI", res.status, msg);
+    }
+    const u = json.usage;
+    if (u) { state.usage.input += u.prompt_tokens || 0; state.usage.output += u.completion_tokens || 0; paintTokens(); }
+    const choice = json.choices && json.choices[0];
+    if (choice && choice.finish_reason === "content_filter") throw new Error("OpenAI filtered the response.");
+    const out = choice && choice.message && choice.message.content;
+    if (!out) throw new Error("OpenAI returned no message content.");
+    return out;
+  }
+  throw new Error("OpenAI rejected both token-limit parameter names - the model may not support chat completions.");
+}
+
+async function callGemini(asset, userText) {
+  const p = PROVIDERS.gemini;
+  const b64 = encodeFor(asset, p);
+  if (!b64) throw new Error("Could not encode the photo small enough to send.");
+  let res;
+  try {
+    res = await fetch(p.url + encodeURIComponent(curModel()) + ":generateContent", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        // Header, not ?key= - an API key has no business in a URL, where it lands
+        // in history and logs. Preflight confirms this header is allowed.
+        "x-goog-api-key": state.keys.gemini
+      },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: userText }, { inline_data: { mime_type: "image/jpeg", data: b64 } }] }],
+        generationConfig: { maxOutputTokens: 2048, temperature: 0.6, responseMimeType: "application/json" }
+      })
+    });
+  } catch (_) { throw netError("generativelanguage.googleapis.com"); }
+  const text = await res.text();
+  let json = null; try { json = JSON.parse(text); } catch (_) {}
+  if (!res.ok) {
+    const msg = String((json && json.error && json.error.message) || text);
+    if (res.status === 404) throw new Error('Gemini does not recognise the model "' + curModel() + '". Pick another from the list.');
+    throw apiError("Gemini", res.status, msg);
+  }
+  const u = json.usageMetadata;
+  if (u) { state.usage.input += u.promptTokenCount || 0; state.usage.output += u.candidatesTokenCount || 0; paintTokens(); }
+  if (json.promptFeedback && json.promptFeedback.blockReason)
+    throw new Error("Gemini blocked the request (" + json.promptFeedback.blockReason + ").");
+  const cand = json.candidates && json.candidates[0];
+  if (cand && cand.finishReason && !["STOP", "MAX_TOKENS"].includes(cand.finishReason))
+    throw new Error("Gemini stopped early (" + cand.finishReason + ").");
+  const parts = cand && cand.content && cand.content.parts;
+  const out = parts && parts.map((x) => x.text || "").join("");
+  if (!out) throw new Error("Gemini returned no text.");
+  return out;
+}
+
 async function callNvidia(asset, userText) {
   const p = PROVIDERS.nvidia;
   const b64 = encodeFor(asset, p);
@@ -1311,6 +1435,9 @@ function validateWrite(o) {
   return e;
 }
 
+/* One caller per provider. Every key in PROVIDERS must appear here. */
+const CALLERS = { gemini: callGemini, openai: callOpenAI, anthropic: callAnthropic, nvidia: callNvidia };
+
 /* Providers without enforced output shapes need the contract spelled out in the prompt. */
 const JSON_SHAPE =
 `Reply with one JSON object and nothing else - no preamble, no commentary, no markdown fences. Exact shape:
@@ -1374,7 +1501,8 @@ Describe only what is visible. Do not claim to know current trends, and do not i
 
 async function writeFor(platformKey) {
   const a = state.assets.find((x) => x.id === (state.chosenId || state.compare.winnerId));
-  const call = state.provider === "anthropic" ? callAnthropic : callNvidia;
+  const call = CALLERS[state.provider];
+  if (!call) throw new Error("No caller wired for provider " + state.provider);
   const base = writePrompt(platformKey);
   let last = null;
   for (let attempt = 0; attempt < 2; attempt++) {
@@ -1987,7 +2115,7 @@ $("useai").onchange = (e) => {
   $("aifields").classList.toggle("hide", !state.useAI);
   $("aitoggle").classList.toggle("on", state.useAI);
   // Unticking means the keys are gone, not merely hidden.
-  if (!state.useAI) { state.keys.nvidia = ""; state.keys.anthropic = ""; $("apikey").value = ""; }
+  if (!state.useAI) { Object.keys(state.keys).forEach((k) => { state.keys[k] = ""; }); $("apikey").value = ""; }
   refreshRun();
 };
 $("apikey").oninput = (e) => { state.keys[state.provider] = e.target.value.trim(); refreshRun(); };
