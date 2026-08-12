@@ -165,6 +165,14 @@ code { font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-si
         <input type="password" id="apikey" autocomplete="off" spellcheck="false"></div>
       <div><label class="fld" for="model">Model</label><select id="model"></select></div>
     </div>
+    <div id="proxyrow" class="hide" style="margin-top:12px">
+      <label class="fld" for="proxyurl">Relay URL <span class="faint">- required for this provider</span></label>
+      <input type="text" id="proxyurl" spellcheck="false" placeholder="https://your-worker.your-subdomain.workers.dev">
+      <div class="small faint" style="margin-top:6px">
+        A relay is about twenty lines that forwards the request and adds the CORS headers the provider omits. Your key still
+        travels from this page and is never stored by the relay. If you have not set one up, use Anthropic instead.
+      </div>
+    </div>
     <div class="small faint" style="margin-top:8px">
       Whichever you pick, the key stays in this tab's memory only - never storage, never anywhere but that provider.
       Ticking this box is the only thing that sends your photos off the machine; untick it and they never leave.
@@ -260,7 +268,7 @@ const GOAL_NUDGE = {
 const PROVIDERS = {
   nvidia: {
     label: "NVIDIA NIM",
-    tag: "free credits",
+    tag: "free credits, needs a relay",
     url: "https://integrate.api.nvidia.com/v1/chat/completions",
     keyUrl: "https://build.nvidia.com/",
     keyLabel: "NVIDIA API key",
@@ -268,13 +276,11 @@ const PROVIDERS = {
     keyPrefix: "nvapi-",
     // NVIDIA rejects oversized inline images, so encode smaller than the Anthropic path.
     imageEdge: 760, imageQuality: 0.72, maxImageBytes: 170000,
-    structuredOutputs: false,
-    note: 'Sign in at <a href="https://build.nvidia.com/" target="_blank" rel="noopener">build.nvidia.com</a> and click ' +
-      '<em>Get API Key</em> on any vision model. The free allowance is a credit grant for evaluation, not an unlimited tier - ' +
-      'when the credits run out the calls start failing rather than silently billing you. ' +
-      '<strong>One caveat I cannot test for you:</strong> NVIDIA does not document whether it permits calls straight from a ' +
-      'browser. If it does not, the request is blocked before it is sent and you will see a CORS message below - ' +
-      'nothing is broken on your side, that route is simply closed and you would need Anthropic or a small proxy of your own.',
+    structuredOutputs: false, needsProxy: true,
+    note: '<strong>Tested and confirmed: NVIDIA blocks calls made straight from a browser.</strong> Their endpoint sends no ' +
+      'CORS headers, so the request is refused before it leaves the page. This is not something a static file can work around - ' +
+      'it needs one hop through a relay you control. Paste the relay URL below and this option works; leave it blank and it ' +
+      'will fail every time. The free allowance itself is a credit grant for evaluation, not an unlimited tier.',
     models: [
       ["meta/llama-3.2-90b-vision-instruct", "Llama 3.2 90B Vision - best quality"],
       ["meta/llama-3.2-11b-vision-instruct", "Llama 3.2 11B Vision - faster, lighter"],
@@ -292,8 +298,8 @@ const PROVIDERS = {
     imageEdge: 1568, imageQuality: 0.9, maxImageBytes: 4500000,
     structuredOutputs: true,
     note: 'Keys at <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a>. ' +
-      'Billed per token, so a run of a few platforms costs fractions of a cent. Anthropic officially supports calling it ' +
-      'from a browser, so this route is the one known to work without a server.',
+      'Billed per token, so a run of a few platforms costs fractions of a cent. Anthropic officially supports being called ' +
+      'from a browser, so this is the route that works with no relay and no server - which is why it is the default here.',
     models: [
       ["claude-sonnet-5", "Claude Sonnet 5"],
       ["claude-opus-5", "Claude Opus 5 - highest quality"],
@@ -306,7 +312,8 @@ const MAX_PHOTOS = 8, MAX_BYTES = 15 * 1024 * 1024, WORK_EDGE = 720;
 
 /* ================================ state ================================ */
 const state = {
-  useAI: false, provider: "nvidia",
+  // Anthropic is the default because it is the only provider that works with no relay.
+  useAI: false, provider: "anthropic", proxyUrl: "",
   keys: { nvidia: "", anthropic: "" },
   models: { nvidia: PROVIDERS.nvidia.models[0][0], anthropic: PROVIDERS.anthropic.models[0][0] },
   assets: [], platforms: new Set(), goal: "", niche: "",
@@ -981,9 +988,11 @@ async function callNvidia(asset, userText) {
   const p = PROVIDERS.nvidia;
   const b64 = encodeFor(asset, p);
   if (!b64) throw new Error("Could not shrink the photo under NVIDIA's inline image limit - try a smaller original.");
+  // NVIDIA sends no CORS headers, so a browser cannot call it directly - go via the relay.
+  const endpoint = state.proxyUrl || p.url;
   let res;
   try {
-    res = await fetch(p.url, { method: "POST", headers: {
+    res = await fetch(endpoint, { method: "POST", headers: {
       "content-type": "application/json", "accept": "application/json",
       "authorization": "Bearer " + state.keys.nvidia
     }, body: JSON.stringify({
@@ -993,7 +1002,7 @@ async function callNvidia(asset, userText) {
         { type: "image_url", image_url: { url: "data:image/jpeg;base64," + b64 } }
       ] }]
     }) });
-  } catch (_) { throw netError("integrate.api.nvidia.com"); }
+  } catch (_) { throw netError(state.proxyUrl ? "your relay at " + state.proxyUrl : "integrate.api.nvidia.com"); }
   const text = await res.text();
   let json = null; try { json = JSON.parse(text); } catch (_) {}
   if (!res.ok) {
@@ -1561,6 +1570,9 @@ function refreshRun() {
   if (!state.platforms.size) missing.push("at least one platform");
   // If captions are switched on, don't quietly run without them - ask for the key.
   if (state.useAI && curKey().length <= 10) missing.push("your " + prov().label + " key (or untick captions)");
+  // Don't let a run start that we already know the browser will refuse.
+  if (state.useAI && prov().needsProxy && !/^https?:\/\/.+/i.test(state.proxyUrl))
+    missing.push("a relay URL for " + prov().label + ", which blocks browsers (or switch to Anthropic)");
   $("run").disabled = missing.length > 0 || state.running;
   $("runhint").textContent = state.running ? "Working..." : missing.length ? "Still need " + list(missing) + "." :
     state.assets.length + " photo" + (state.assets.length === 1 ? "" : "s") + ", " + state.platforms.size +
@@ -1585,6 +1597,7 @@ function syncProvider() {
   $("keylabel").textContent = p.keyLabel;
   $("apikey").placeholder = p.keyPlaceholder;
   $("apikey").value = state.keys[state.provider];   // keys are kept per provider, not shared
+  $("proxyrow").classList.toggle("hide", !p.needsProxy);
   $("model").innerHTML = p.models.map(([v, l]) =>
     '<option value="' + v + '"' + (v === state.models[state.provider] ? " selected" : "") + ">" + l + "</option>").join("");
   refreshRun();
@@ -1601,6 +1614,7 @@ $("useai").onchange = (e) => {
   refreshRun();
 };
 $("apikey").oninput = (e) => { state.keys[state.provider] = e.target.value.trim(); refreshRun(); };
+$("proxyurl").oninput = (e) => { state.proxyUrl = e.target.value.trim().replace(/\/+$/, ""); refreshRun(); };
 $("model").onchange = (e) => { state.models[state.provider] = e.target.value; };
 syncProvider();
 $("goal").onchange = (e) => { state.goal = e.target.value; };
