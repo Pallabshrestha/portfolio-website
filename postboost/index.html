@@ -106,6 +106,21 @@ ul.tight { margin:0 0 6px; padding-left:18px; } ul.tight li { margin-bottom:4px;
 .imp-high { color:var(--bad); font-weight:700; } .imp-medium { color:var(--warn); font-weight:700; } .imp-low { color:var(--fg-soft); font-weight:700; }
 .winbox { display:flex; gap:14px; align-items:flex-start; flex-wrap:wrap; }
 .winbox img { width:190px; max-width:45%; border-radius:8px; border:2px solid var(--good); }
+textarea.cap {
+  width:100%; min-height:132px; font:inherit; font-size:14px; line-height:1.55; padding:10px;
+  border:1px solid var(--line); border-radius:8px; background:var(--bg); color:var(--fg); resize:vertical;
+}
+textarea.alt { min-height:64px; }
+.scorehead { display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; margin:10px 0 6px; }
+.bigscore { font-size:24px; font-weight:800; letter-spacing:-.02em; line-height:1; }
+.bigscore.good { color:var(--good); } .bigscore.mid { color:var(--warn); } .bigscore.bad { color:var(--bad); }
+.chk { display:flex; gap:9px; align-items:flex-start; padding:5px 0; font-size:13px; border-bottom:1px solid var(--line); }
+.chk:last-child { border-bottom:none; }
+.st { flex:none; width:46px; font-size:10px; font-weight:800; letter-spacing:.06em; padding-top:2px; }
+.st.pass { color:var(--good); } .st.warn { color:var(--warn); } .st.fail { color:var(--bad); } .st.skip { color:var(--fg-faint); }
+.chk .lbl { flex:1; min-width:150px; }
+.chk .val { flex:none; font-variant-numeric:tabular-nums; color:var(--fg-soft); font-size:12.5px; }
+details.checks summary { font-size:12.5px; color:var(--fg-soft); padding:4px 0; }
 footer { margin-top:30px; padding-top:16px; border-top:1px solid var(--line); font-size:12.5px; color:var(--fg-soft); }
 code { font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:.92em; }
 </style>
@@ -116,7 +131,7 @@ code { font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-si
 <header class="top">
   <div>
     <h1>PostBoost</h1>
-    <div class="small">Upload similar photos. Get measured comparison, a recommendation, and concrete fixes. No account, no key, nothing stored.</div>
+    <div class="small">Draft captions that get found and get replies - scored for SEO and engagement against each platform's numbers. No account, nothing stored.</div>
   </div>
   <div class="small faint" id="tokenmeter"></div>
 </header>
@@ -143,17 +158,22 @@ code { font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-si
     <div><label class="fld" for="goal">Goal <span class="faint">(shifts how photos are weighed)</span></label><select id="goal">
       <option value="">Balanced</option><option value="reach">reach</option><option value="engagement">engagement</option><option value="clicks">clicks</option><option value="follows">follows</option>
     </select></div>
-    <div><label class="fld" for="niche">Niche / topic <span class="faint">(optional, used by the caption writer)</span></label><input type="text" id="niche" placeholder="e.g. speciality coffee roasting"></div>
+    <div><label class="fld" for="niche">Niche / topic <span class="faint">(optional)</span></label><input type="text" id="niche" placeholder="e.g. speciality coffee roasting"></div>
+    <div><label class="fld" for="keyword">Primary keyword <span class="faint">- what people would search</span></label><input type="text" id="keyword" placeholder="e.g. cold brew coffee"></div>
+    <div><label class="fld" for="cta">Call to action <span class="faint">(optional)</span></label><input type="text" id="cta" placeholder="e.g. book a tasting this week"></div>
+  </div>
+  <div class="small faint" style="margin-top:8px">
+    The primary keyword is what the SEO score is measured against - whether it appears before the "see more" fold,
+    how often it repeats, and whether the alt text carries it. Leave it blank and those checks are skipped rather than guessed.
   </div>
 </section>
 
 <section class="card">
-  <h2>3. Captions <span class="badge line">optional</span></h2>
+  <h2>3. Have a model draft them <span class="badge line">optional</span></h2>
   <p class="small" style="margin-bottom:10px">
-    Everything above works with no key. Writing captions, hashtags and alt text is the one part that needs a language
-    model - measuring pixels can't produce sentences. Leave this off and you'll get a writing brief instead: the exact
-    character counts, hashtag counts, tone and safe zones for each platform, so you can write them yourself in a minute.
-    If you do want them written, there is a free option and a paid one.
+    The scoring is always on and needs no key - it grades whatever is in the caption box, whether a model wrote it or
+    you did. What a key buys you is the first draft. Leave this off and you get editable scaffolds instead: the right
+    structure with the keyword already placed, for you to fill in. A scaffold you complete beats a caption a model invented.
   </p>
   <label class="chip" id="aitoggle"><input type="checkbox" id="useai"> Use an AI model to write captions</label>
   <div id="aifields" class="hide" style="margin-top:14px">
@@ -208,6 +228,12 @@ code { font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-si
   rather than a black box. The 1-10 scores and the winner are <em>judged</em>: they apply documented thresholds and
   per-platform weights to those numbers. That is a defensible heuristic, not ground truth, and it says nothing about
   what a photo is <em>of</em>. Only the optional caption writer understands subject matter.</p>
+  <p><strong>What the caption score is.</strong> Every check is a rule applied to your text: does the keyword appear
+  before the fold, how many hashtags, how long is the hook, is there an ask, is that a cliché. It runs locally on
+  whatever is in the box, so it grades your own writing exactly as it grades a model's. What it is <em>not</em> is a
+  prediction. It has no access to what is trending, no view counts, no idea how your audience behaves - a page with no
+  live data that claimed otherwise would just be inventing numbers. A high score means the caption obeys the rules that
+  usually help; it does not promise reach.</p>
   <p><strong>Data policy.</strong> With captions off, nothing leaves your browser - there is no server behind this page.
   With captions on, the chosen photo and its measurements are sent to whichever provider you picked
   (<code>integrate.api.nvidia.com</code> or <code>api.anthropic.com</code>); that is a real hop, and "we don't store it"
@@ -229,6 +255,8 @@ const PLATFORMS = {
     hashtagRule: "3-5 hashtags, industry-specific",
     toneRule: "professional, insight-led, first-person story",
     extras: "no external links in the body - put the link in the first comment",
+    // Numeric targets the scorer checks against. fold = chars visible before "see more".
+    len: [1200, 1800], tags: [3, 5], emoji: [0, 2], fold: 210, firstPerson: true, wantsQuestion: false,
     weights: { sharp: .20, light: .25, clutter: .20, contrast: .15, colour: .05, subject: .15 }
   },
   instagram: {
@@ -237,6 +265,7 @@ const PLATFORMS = {
     hashtagRule: "8-15 hashtags, mixing broad / niche / micro",
     toneRule: "visual, personal, emoji-friendly",
     extras: "alt text matters; hashtags can go in the first comment",
+    len: [125, 600], tags: [8, 15], emoji: [1, 8], fold: 125, firstPerson: false, wantsQuestion: false,
     weights: { sharp: .20, light: .15, clutter: .10, contrast: .15, colour: .25, subject: .15 }
   },
   facebook: {
@@ -245,14 +274,16 @@ const PLATFORMS = {
     hashtagRule: "1-3 hashtags only",
     toneRule: "conversational, community-oriented",
     extras: "a question prompt drives comments",
+    len: [40, 120], tags: [1, 3], emoji: [0, 4], fold: 80, firstPerson: false, wantsQuestion: true,
     weights: { sharp: .18, light: .20, clutter: .15, contrast: .17, colour: .15, subject: .15 }
   },
   tiktok: {
     label: "TikTok", carousel: false, aspects: ["9:16"],
     captionRule: "80-150 characters",
-    hashtagRule: "3-6 hashtags, trend plus niche",
+    hashtagRule: "3-6 hashtags, one broad reach tag plus specific niche ones",
     toneRule: "punchy, native slang, hook first",
     extras: "hook in the first 3 seconds; keep text out of the top 12% and bottom 20% safe zones",
+    len: [80, 150], tags: [3, 6], emoji: [1, 6], fold: 100, firstPerson: false, wantsQuestion: false,
     weights: { sharp: .15, light: .15, clutter: .10, contrast: .25, colour: .20, subject: .15 }
   }
 };
@@ -316,7 +347,8 @@ const state = {
   useAI: false, provider: "anthropic", proxyUrl: "",
   keys: { nvidia: "", anthropic: "" },
   models: { nvidia: PROVIDERS.nvidia.models[0][0], anthropic: PROVIDERS.anthropic.models[0][0] },
-  assets: [], platforms: new Set(), goal: "", niche: "",
+  assets: [], platforms: new Set(), goal: "", niche: "", keyword: "", cta: "",
+  drafts: {},          // per-platform edited caption text, keyed "<platform>:<index>"
   compare: null, recs: null, writing: null, chosenId: null,
   usage: { input: 0, output: 0 }, running: false, done: false
 };
@@ -887,28 +919,254 @@ function buildRecs() {
   return { winnerId: winner.id, winner: forAsset(winner, true), others, aspects: need };
 }
 
-/* --------------------- writing brief (the no-key path) --------------------- */
-function buildBrief() {
-  const winner = state.assets.find((a) => a.id === (state.chosenId || state.compare.winnerId));
-  const m = winner.m;
-  return [...state.platforms].map((k) => {
-    const c = PLATFORMS[k];
+/* =========================================================================
+   SEO + engagement scoring. Local, deterministic, no key, no network.
+   Every check reports the measured value and how to fix it, so the score is
+   arguable rather than an opinion handed down.
+   ========================================================================= */
+const HASHTAG_RE = /#[\p{L}\p{N}_]+/gu;
+const EMOJI_RE = /\p{Extended_Pictographic}/gu;
+const WEAK_OPENERS = [
+  "check out", "excited to", "thrilled to", "happy to", "pleased to", "delighted to",
+  "introducing", "just wanted to", "hello everyone", "hi all", "hey guys", "today i", "today we",
+  "we are proud", "i am proud", "proud to"
+];
+const CLICHES = [
+  "thrilled to announce", "excited to announce", "happy to share", "delighted to share",
+  "without further ado", "game changer", "game-changer", "needless to say",
+  "at the end of the day", "circle back", "low-hanging fruit", "move the needle",
+  "take it to the next level", "in today's world", "in this day and age",
+  "humbled to announce", "little did i know", "the rest is history"
+];
+const HOOK_SIGNAL = /\b(why|how|what|when|who|never|stop|mistake|nobody|secret|actually|truth|before you|most people|here'?s|turns out)\b/i;
+const CTA_VERB = /\b(comment|share|save this|save it|tag|follow|book|try|download|read|watch|join|tell me|drop a|click|shop|sign up|subscribe|link in bio|dm|message us|get in touch|let me know)\b/i;
+const FIRST_PERSON = /\b(i|we|my|our|me|us)\b/i;
+
+const escRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+function kwHits(hay, kw) {
+  if (!kw || !kw.trim()) return 0;
+  const re = new RegExp("\\b" + escRe(kw.trim()).replace(/\s+/g, "\\s+") + "\\b", "gi");
+  return (String(hay).match(re) || []).length;
+}
+
+function analyseCaption(text) {
+  text = String(text || "");
+  const tags = text.match(HASHTAG_RE) || [];
+  const body = text.replace(HASHTAG_RE, " ").replace(/[ \t]+/g, " ").trim();
+  const lines = text.split(/\n+/).map((s) => s.trim()).filter(Boolean);
+  const words = body ? body.split(/\s+/).filter(Boolean) : [];
+  const sentences = body.split(/[.!?]+(?:\s|$)/).map((s) => s.trim()).filter(Boolean);
+  const lastLine = lines.length ? lines[lines.length - 1] : "";
+  return {
+    text, tags, body, lines, words, sentences,
+    firstLine: lines[0] || "",
+    lastLineIsTagsOnly: !!lastLine && lastLine.replace(HASHTAG_RE, "").trim() === "",
+    emoji: (text.match(EMOJI_RE) || []).length,
+    chars: text.length,
+    tagChars: tags.join(" ").length,
+    avgSentenceWords: sentences.length ? words.length / sentences.length : 0
+  };
+}
+
+/**
+ * Grades one caption for one platform. Returns a 0-100 overall plus separate
+ * SEO and engagement scores, and the full check list behind them.
+ */
+function scoreCaption(text, altText, platformKey, keyword) {
+  const cfg = PLATFORMS[platformKey];
+  const a = analyseCaption(text);
+  const kw = (keyword || "").trim();
+  const checks = [];
+  const add = (group, label, status, value, fix, weight) =>
+    checks.push({ group, label, status, value: String(value), fix: fix || "", weight: weight == null ? 1 : weight });
+
+  const inRange = (v, [lo, hi]) => v >= lo && v <= hi;
+  const near = (v, [lo, hi], slack) => v >= lo - slack && v <= hi + slack;
+
+  /* ---------- SEO ---------- */
+  if (!kw) {
+    add("seo", "Primary keyword", "skip", "no keyword set",
+      "Add a primary keyword above and these checks start running.", 0);
+  } else {
+    const hits = kwHits(a.body, kw);
+    add("seo", "Keyword appears", hits > 0 ? "pass" : "fail", hits + "x",
+      hits ? "" : 'Work "' + kw + '" into the caption in a way that reads naturally.', 2);
+
+    const visible = a.text.slice(0, cfg.fold);
+    const inFold = kwHits(visible, kw) > 0;
+    add("seo", "Keyword before the fold", inFold ? "pass" : hits ? "warn" : "fail",
+      inFold ? "yes" : "not in first " + cfg.fold + " chars",
+      inFold ? "" : "Move it into the first " + cfg.fold + " characters - that is all a browsing reader and the search index see up front.", 2);
+
+    // Counted as mentions per length, not as a share of words: one mention of a
+    // three-word phrase in a short caption is not stuffing, and a ratio says it is.
+    const cap = Math.max(1, Math.round(a.words.length / 80)) + 1;
+    const repOk = hits >= 1 && hits <= cap;
+    add("seo", "Keyword repetition", repOk ? "pass" : hits > cap ? "warn" : "fail",
+      hits + (hits === 1 ? " mention" : " mentions") + " in " + a.words.length + " words",
+      repOk ? "" : hits > cap
+        ? "More than this length needs - " + cap + " or fewer reads naturally; beyond that it looks like stuffing."
+        : "Mention it at least once.", 1);
+  }
+
+  const lenOk = inRange(a.chars, cfg.len);
+  add("seo", "Caption length", lenOk ? "pass" : near(a.chars, cfg.len, cfg.len[1] * 0.25) ? "warn" : "fail",
+    a.chars + " chars",
+    lenOk ? "" : a.chars < cfg.len[0]
+      ? "Short for " + cfg.label + " - target " + cfg.len[0] + "-" + cfg.len[1] + " characters."
+      : "Long for " + cfg.label + " - target " + cfg.len[0] + "-" + cfg.len[1] + " characters.", 1.5);
+
+  const tagOk = inRange(a.tags.length, cfg.tags);
+  add("seo", "Hashtag count", tagOk ? "pass" : near(a.tags.length, cfg.tags, 2) ? "warn" : "fail",
+    a.tags.length + " tags",
+    tagOk ? "" : cfg.label + " wants " + cfg.tags[0] + "-" + cfg.tags[1] + ".", 1.5);
+
+  const tagShare = a.chars ? a.tagChars / a.chars : 0;
+  add("seo", "Hashtags not dominating", tagShare <= 0.35 ? "pass" : "warn",
+    Math.round(tagShare * 100) + "% of the text",
+    tagShare <= 0.35 ? "" : "The tag block is crowding out the words. Move hashtags to the first comment.", 0.5);
+
+  const alt = String(altText || "").trim();
+  const altOk = alt.length >= 50 && alt.length <= 250;
+  add("seo", "Alt text", alt ? (altOk ? "pass" : "warn") : "fail",
+    alt ? alt.length + " chars" : "missing",
+    alt ? (altOk ? "" : alt.length < 50 ? "Too thin to be useful - describe what is actually in the shot." : "Trim to under 250 characters.")
+        : "Add alt text. Screen readers need it and Instagram indexes it.", 1.5);
+
+  if (kw && alt) {
+    const altKw = kwHits(alt, kw) > 0;
+    add("seo", "Keyword in alt text", altKw ? "pass" : "warn", altKw ? "yes" : "no",
+      altKw ? "" : "Fold the keyword into the alt text, still describing the picture honestly.", 1);
+  }
+
+  const hasNumber = /\d/.test(a.body);
+  add("seo", "Concrete detail", hasNumber ? "pass" : "warn", hasNumber ? "has a number" : "no specifics",
+    hasNumber ? "" : "A number, place or name makes a caption searchable and believable. Vague copy ranks and converts badly.", 0.5);
+
+  /* ---------- engagement ---------- */
+  const hookLen = a.firstLine.length;
+  const hookFits = hookLen > 0 && hookLen <= cfg.fold;
+  add("engagement", "Hook fits above the fold", hookFits ? "pass" : "warn",
+    hookLen + " / " + cfg.fold + " chars",
+    hookFits ? "" : hookLen === 0 ? "Write an opening line." : "Your first line is cut off mid-thought. Get it under " + cfg.fold + " characters.", 2);
+
+  const lowerHook = a.firstLine.toLowerCase();
+  const weak = WEAK_OPENERS.find((w) => lowerHook.startsWith(w));
+  add("engagement", "Hook is not a stock opener", weak ? "fail" : "pass", weak ? '"' + weak + '..."' : "ok",
+    weak ? 'Openers like "' + weak + '" say nothing. Lead with the surprising part instead.' : "", 1.5);
+
+  const strong = HOOK_SIGNAL.test(a.firstLine) || /\?/.test(a.firstLine) || /\d/.test(a.firstLine);
+  add("engagement", "Hook has a reason to read on", strong ? "pass" : "warn", strong ? "yes" : "flat",
+    strong ? "" : "Open with a question, a number, or a claim that creates tension.", 1.5);
+
+  const ctaFromUser = state.cta && kwHits(a.body, state.cta) > 0;
+  const hasCta = ctaFromUser || CTA_VERB.test(a.body);
+  add("engagement", "Call to action", hasCta ? "pass" : "fail", hasCta ? "present" : "none",
+    hasCta ? "" : "Say what you want them to do - comment, save, book, follow. A post without an ask gets scrolled past.", 1.5);
+
+  const q = /\?/.test(a.body);
+  add("engagement", "Asks a question", q ? "pass" : cfg.wantsQuestion ? "fail" : "warn", q ? "yes" : "no",
+    q ? "" : "A direct question is the cheapest way to earn comments" + (cfg.wantsQuestion ? ", and it matters most on " + cfg.label + "." : "."),
+    cfg.wantsQuestion ? 1.5 : 0.75);
+
+  const eOk = inRange(a.emoji, cfg.emoji);
+  add("engagement", "Emoji use", eOk ? "pass" : "warn", a.emoji + " emoji",
+    eOk ? "" : a.emoji < cfg.emoji[0] ? cfg.label + " copy usually carries " + cfg.emoji[0] + "-" + cfg.emoji[1] + "."
+                                      : "Too many for " + cfg.label + " - keep it to " + cfg.emoji[0] + "-" + cfg.emoji[1] + ".", 0.5);
+
+  if (a.chars > 300) {
+    const scannable = a.lines.length >= 3;
+    add("engagement", "Broken into paragraphs", scannable ? "pass" : "fail", a.lines.length + " blocks",
+      scannable ? "" : "One long block gets skipped on a phone. Break it with blank lines.", 1);
+  }
+
+  const sentOk = a.avgSentenceWords > 0 && a.avgSentenceWords <= 22;
+  add("engagement", "Sentence length", sentOk ? "pass" : "warn",
+    a.avgSentenceWords ? a.avgSentenceWords.toFixed(1) + " words avg" : "n/a",
+    sentOk ? "" : "Long sentences lose people on mobile. Aim under 22 words.", 0.5);
+
+  if (cfg.firstPerson) {
+    const fp = FIRST_PERSON.test(a.body);
+    add("engagement", "First-person voice", fp ? "pass" : "warn", fp ? "yes" : "impersonal",
+      fp ? "" : cfg.label + " rewards a personal story over corporate distance.", 1);
+  }
+
+  const lower = a.body.toLowerCase();
+  const found = CLICHES.filter((c) => lower.includes(c));
+  add("engagement", "No clichés", found.length ? "fail" : "pass",
+    found.length ? found.join(", ") : "none",
+    found.length ? "Cut " + list(found.map((f) => '"' + f + '"')) + " - readers skim straight past that phrasing." : "", 1);
+
+  add("engagement", "Does not end on a hashtag wall", a.lastLineIsTagsOnly && a.chars < 200 ? "warn" : "pass",
+    a.lastLineIsTagsOnly ? "ends with tags" : "ends with words",
+    a.lastLineIsTagsOnly && a.chars < 200 ? "On a short caption, close with a line of text so the last thing read is yours." : "", 0.5);
+
+  const tally = (group) => {
+    const set = checks.filter((c) => c.group === group && c.weight > 0);
+    const total = set.reduce((s, c) => s + c.weight, 0);
+    const got = set.reduce((s, c) => s + c.weight * (c.status === "pass" ? 1 : c.status === "warn" ? 0.5 : 0), 0);
+    return total ? Math.round((got / total) * 100) : 0;
+  };
+  const all = checks.filter((c) => c.weight > 0);
+  const totalW = all.reduce((s, c) => s + c.weight, 0);
+  const gotW = all.reduce((s, c) => s + c.weight * (c.status === "pass" ? 1 : c.status === "warn" ? 0.5 : 0), 0);
+
+  return {
+    score: totalW ? Math.round((gotW / totalW) * 100) : 0,
+    seo: tally("seo"), engagement: tally("engagement"),
+    checks, stats: a
+  };
+}
+
+/* ---------------- scaffolds: structure without invented facts ---------------- */
+function scaffold(angle, platformKey) {
+  const cfg = PLATFORMS[platformKey];
+  const kw = state.keyword || "[your keyword]";
+  const cta = state.cta || "[what you want them to do]";
+  const short = cfg.len[1] <= 200;
+  if (short) {
     return {
-      platform: k,
-      assetId: winner.id,
-      lines: [
-        "Caption length: " + c.captionRule,
-        "Hashtags: " + c.hashtagRule,
-        "Tone: " + c.toneRule,
-        "Platform quirk: " + c.extras,
-        "Crop: " + c.aspects.join(" or ") + " (this photo is " + m.aspectLabel + ", losing " +
-          pct(Math.min(...c.aspects.map((a) => cropLoss(m.aspect, ASPECTS[a])))) + " at best)",
-        "Palette to echo in any graphics: " + m.colors.slice(0, 3).map((x) => x.name).join(", "),
-        "Alt text should describe what is visible - the measurements here cannot tell you the subject",
-        "Timing: post when your own audience is active. Any figure this page invented would be a guess dressed as data."
-      ]
-    };
-  });
+      "story-led": `[The one surprising thing that happened here.] ${kw}, and [why it mattered].\n\n${cta}`,
+      "value-led": `${kw}: [the single most useful thing you know about it].\n\n${cta}`,
+      "question-led": `[The question your reader is quietly asking about ${kw}?]\n\n[Your one-line answer.] ${cta}`
+    }[angle];
+  }
+  return {
+    "story-led":
+`[Open on the moment this photo was taken - one concrete line, no throat-clearing.]
+
+[What went wrong, or what surprised you.]
+
+Here is what it taught me about ${kw}: [the insight, in a sentence or two].
+
+[Why that matters to the person reading.]
+
+${cta}`,
+    "value-led":
+`${kw}: [the most useful thing you know about it, stated flatly.]
+
+[Point one - the part most people get wrong.]
+[Point two - what to do instead.]
+[Point three - the detail that proves you have actually done this.]
+
+${cta}`,
+    "question-led":
+`[The question your reader is quietly asking about ${kw}?]
+
+[Your honest answer, including the part that is inconvenient.]
+
+[One specific detail - a number, a place, a name - that makes it credible.]
+
+${cta}`
+  }[angle];
+}
+
+const ANGLES = ["story-led", "value-led", "question-led"];
+function scaffoldSet(platformKey) {
+  return ANGLES.map((angle) => ({
+    angle, text: scaffold(angle, platformKey),
+    rationale: "Structure only. Fill the bracketed parts - the score below updates as you type."
+  }));
 }
 
 /* =========================================================================
@@ -1076,6 +1334,8 @@ function writePrompt(platformKey) {
 
 ${state.niche ? "Niche: " + state.niche : "Niche: not stated - infer it from the photo"}
 ${state.goal ? "Goal: " + state.goal : "Goal: not stated"}
+${state.keyword ? "Primary keyword: " + state.keyword : "Primary keyword: none given - pick the phrase a reader would actually search and use it consistently"}
+${state.cta ? "Call to action: " + state.cta : "Call to action: none given - end on a specific ask of your own"}
 
 Measured properties of this photo (these are computed from the pixels - trust them over your own impression):
 - ${m.w} x ${m.h}, ${m.aspectLabel}
@@ -1090,9 +1350,26 @@ ${cfg.label} rules:
 - Tone: ${cfg.toneRule}
 - Extras: ${cfg.extras}
 
+These drafts are graded against fixed targets the moment they come back, so write to them:
+
+Search visibility
+- Put the primary keyword inside the first ${cfg.fold} characters. That is all a browsing reader sees before "see more", and it is what gets indexed.
+- Use the keyword about once per 60-80 words. More than that reads as stuffing and scores worse, not better.
+- Total length ${cfg.len[0]}-${cfg.len[1]} characters. Hashtags ${cfg.tags[0]}-${cfg.tags[1]}. Emoji ${cfg.emoji[0]}-${cfg.emoji[1]}.
+- Alt text must describe what is genuinely visible and carry the keyword, 50-250 characters.
+- Include at least one concrete specific: a number, a place, a name. Vague copy is unsearchable.
+
+Engagement
+- The first line is the hook and must stand alone under ${cfg.fold} characters. Open with a question, a number, or a claim that creates tension.
+- Never open with a stock phrase: ${WEAK_OPENERS.slice(0, 8).join(", ")}. They say nothing.
+- End with a clear ask. ${cfg.wantsQuestion ? "Include a direct question - it is the main comment driver on " + cfg.label + "." : "A question is optional but helps."}
+- Break anything over 300 characters into short paragraphs. Keep sentences under 22 words.
+- ${cfg.firstPerson ? "Write in the first person; a personal story beats corporate distance here." : "Match the platform's native voice."}
+- Avoid these entirely: ${CLICHES.slice(0, 8).join(", ")}.
+
 Three captions with distinct angles: story-led, value-led, question-led. Each ready to paste, each with a one-line rationale.
 Group hashtags into broad, niche and micro tiers and note why the mix and count fit the rule.
-Describe only what is visible. Do not invent view counts, timing data or performance predictions.${prov().structuredOutputs ? "" : "\n\n" + JSON_SHAPE}`;
+Describe only what is visible. Do not claim to know current trends, and do not invent view counts, timing data or performance predictions - this page has no live data and saying otherwise would be a guess dressed as fact.${prov().structuredOutputs ? "" : "\n\n" + JSON_SHAPE}`;
 }
 
 async function writeFor(platformKey) {
@@ -1231,7 +1508,7 @@ async function run() {
   if (state.running) return;
   state.running = true; state.done = false;
   state.compare = null; state.recs = null; state.writing = null; state.chosenId = null;
-  state.usage = { input: 0, output: 0 };
+  state.drafts = {}; state.usage = { input: 0, output: 0 };
   state.assets.forEach((a) => { a.m = null; a.error = null; });
   $("run").disabled = true; $("results").classList.add("hide");
   $("runerr").classList.add("hide"); $("progress").classList.remove("hide");
@@ -1321,10 +1598,10 @@ function wireCopies(root) {
 const nameOf = (id) => { const a = state.assets.find((x) => x.id === id); return a ? a.name : id; };
 const meter = (s) => '<span class="meter ' + (s >= 7.5 ? "g" : s < 5 ? "b" : "") + '"><i style="width:' + (s * 10) + '%"></i></span> <b>' + r1(s) + "</b>";
 
-function renderVerdict() {
+function renderVerdict(bare) {
   const c = state.compare, A = state.assets.filter((a) => a.m);
   const w = state.assets.find((a) => a.id === (state.chosenId || c.winnerId));
-  let h = '<div class="card"><h2>Which photo to post</h2>';
+  let h = bare ? "" : '<div class="card"><h2>Which photo to post</h2>';
   h += '<div class="notice ok"><strong>Recommendation:</strong> ' + esc(c.recommendation) + "</div>";
   if (c.similarity) h += '<p class="small">These are <strong>' + esc(c.similarity.label) +
     '</strong> - the largest perceptual distance in the set is ' + c.maxDist + ' of 64 bits. ' +
@@ -1384,41 +1661,85 @@ function renderVerdict() {
     A.map((a) => '<button class="tiny' + (state.chosenId === a.id ? " primary" : "") + '" data-choose="' + a.id + '">' +
       esc(a.name) + (a.id === c.winnerId ? " (measured best)" : "") + "</button>").join("") +
     '</div><div id="regenstatus" class="small faint" style="margin-top:6px"></div>';
-  return h + "</div>";
+  return h + (bare ? "" : "</div>");
+}
+
+/* Current text for a caption slot: the user's edit if they made one, else the draft. */
+function capKey(plat, idx) { return plat + ":" + idx; }
+function capText(plat, idx) {
+  const k = capKey(plat, idx);
+  if (state.drafts[k] != null) return state.drafts[k];
+  const set = state.writing ? state.writing[plat].captions : scaffoldSet(plat);
+  return set[idx] ? set[idx].text : "";
+}
+function altTextFor(plat) {
+  const k = capKey(plat, "alt");
+  if (state.drafts[k] != null) return state.drafts[k];
+  return state.writing ? state.writing[plat].altText : "";
+}
+
+function renderScoreBlock(plat, idx) {
+  const s = scoreCaption(capText(plat, idx), altTextFor(plat), plat, state.keyword);
+  const cls = s.score >= 80 ? "good" : s.score >= 55 ? "mid" : "bad";
+  const row = (c) =>
+    '<div class="chk"><span class="st ' + c.status + '">' + (c.status === "skip" ? "SKIP" : c.status.toUpperCase()) + "</span>" +
+    '<span class="lbl">' + esc(c.label) + (c.fix ? '<br><span class="small muted">' + esc(c.fix) + "</span>" : "") + "</span>" +
+    '<span class="val">' + esc(c.value) + "</span></div>";
+  const fails = s.checks.filter((c) => c.status === "fail" || c.status === "warn");
+  return '<div class="scorehead"><span class="bigscore ' + cls + '">' + s.score + '<span class="small faint">/100</span></span>' +
+    '<span class="sub small">SEO ' + s.seo + " &middot; engagement " + s.engagement + "</span>" +
+    '<span class="sub small faint">' + s.stats.chars + " chars &middot; " + s.stats.tags.length + " tags &middot; " + s.stats.emoji + " emoji</span></div>" +
+    (fails.length
+      ? '<div>' + fails.map(row).join("") + "</div>"
+      : '<div class="small" style="color:var(--good)">Every check passes.</div>') +
+    '<details class="checks"><summary>All ' + s.checks.length + " checks</summary>" + s.checks.map(row).join("") + "</details>";
 }
 
 function renderPosts() {
   const keys = [...state.platforms];
-  let h = '<div class="card"><h2>Posts</h2><div class="tabs" role="tablist">' +
+  const a = state.assets.find((x) => x.id === (state.chosenId || state.compare.winnerId));
+  let h = '<div class="card"><h2>Captions</h2>';
+  h += '<p class="small">Written for <strong>' + esc(a.name) + "</strong>. " +
+    (state.writing ? esc(prov().label) + " drafted these; edit any of them and the score updates as you type."
+                   : "No key supplied, so these are <strong>structures, not finished copy</strong> - fill the bracketed parts and watch the score move. " +
+                     "An honest scaffold beats an invented caption.") +
+    (state.keyword ? "" : ' <span class="faint">No primary keyword set, so the keyword checks are skipped rather than guessed.</span>') + "</p>";
+  h += '<div class="tabs" role="tablist">' +
     keys.map((k, i) => '<button role="tab" data-tab="' + k + '" aria-selected="' + (i === 0) + '">' + PLATFORMS[k].label + "</button>").join("") + "</div>";
-  const brief = state.writing ? null : buildBrief();
+
   keys.forEach((k, i) => {
-    const cfg = PLATFORMS[k], a = state.assets.find((x) => x.id === (state.chosenId || state.compare.winnerId));
+    const cfg = PLATFORMS[k];
+    const set = state.writing ? state.writing[k].captions : scaffoldSet(k);
     h += '<div data-panel="' + k + '"' + (i === 0 ? "" : ' class="hide"') + ">";
-    h += '<p class="small faint">For <strong>' + esc(a.name) + "</strong>.</p>";
+    if (state.writing) h += '<p class="small muted">' + esc(prov().label) + " reads the photo as: " + esc(state.writing[k].subject) + "</p>";
+    h += '<p class="small faint">Targets: ' + cfg.len[0] + "-" + cfg.len[1] + " chars &middot; " +
+      cfg.tags[0] + "-" + cfg.tags[1] + " hashtags &middot; hook inside " + cfg.fold + " chars &middot; " + esc(cfg.toneRule) + "</p>";
+
+    set.forEach((c, idx) => {
+      const key = capKey(k, idx);
+      h += '<div class="block"><div class="head"><span><strong>' + esc(c.angle) + "</strong></span>" +
+        '<button class="tiny" data-copycap="' + key + '">Copy</button></div><div class="body">' +
+        '<textarea class="cap" data-cap="' + key + '" spellcheck="true">' + esc(capText(k, idx)) + "</textarea>" +
+        '<div data-score="' + key + '">' + renderScoreBlock(k, idx) + "</div>" +
+        '<div class="small muted" style="margin-top:8px"><em>Angle:</em> ' + esc(c.rationale) + "</div></div></div>";
+    });
+
+    const alt = altTextFor(k);
+    h += '<div class="block"><div class="head"><span><strong>Alt text</strong> <span class="faint small">indexed, and read aloud</span></span>' +
+      '<button class="tiny" data-copycap="' + capKey(k, "alt") + '">Copy</button></div><div class="body">' +
+      '<textarea class="cap alt" data-cap="' + capKey(k, "alt") + '" data-plat="' + k + '" spellcheck="true" placeholder="Describe what is actually in the photo, and work the keyword in.">' +
+      esc(alt) + "</textarea></div></div>";
+
     if (state.writing) {
-      const o = state.writing[k];
-      h += '<p class="small muted">' + esc(prov().label) + " reads the photo as: " + esc(o.subject) + "</p>";
-      o.captions.forEach((c) => {
-        h += '<div class="block"><div class="head"><span><strong>' + esc(c.angle) + '</strong> <span class="faint small">' +
-          c.text.length + " chars</span></span>" + copyBtn(c.text) + '</div><div class="body"><pre class="copy">' +
-          esc(c.text) + '</pre><div class="small muted" style="margin-top:8px"><em>Why:</em> ' + esc(c.rationale) + "</div></div></div>";
-      });
-      const all = [...o.hashtags.broad, ...o.hashtags.niche, ...o.hashtags.micro];
+      const o = state.writing[k], all = [...o.hashtags.broad, ...o.hashtags.niche, ...o.hashtags.micro];
       h += '<div class="block"><div class="head"><span><strong>Hashtags</strong> <span class="faint small">' + all.length +
-        " tags</span></span>" + copyBtn(all.join(" "), "Copy all") + '</div><div class="body">' +
+        " tags, target " + cfg.tags[0] + "-" + cfg.tags[1] + "</span></span>" + copyBtn(all.join(" "), "Copy all") +
+        '</div><div class="body">' +
         ["broad", "niche", "micro"].map((t) => '<div class="kv"><b>' + t + ":</b> " +
           (o.hashtags[t].length ? esc(o.hashtags[t].join(" ")) : '<span class="faint">none</span>') + "</div>").join("") +
-        '<div class="small muted" style="margin-top:8px">' + esc(o.hashtags.note) + "</div></div></div>";
-      h += '<div class="block"><div class="head"><strong>Alt text</strong>' + copyBtn(o.altText) +
-        '</div><div class="body"><pre class="copy">' + esc(o.altText) + "</pre></div></div>";
-    } else {
-      const b = brief.find((x) => x.platform === k);
-      h += '<div class="block"><div class="head"><strong>Writing brief</strong>' +
-        copyBtn(b.lines.join("\n"), "Copy brief") + '</div><div class="body"><ul class="tight">' +
-        b.lines.map((l) => "<li>" + esc(l) + "</li>").join("") + "</ul>" +
-        '<p class="small faint" style="margin-bottom:0">No captions were generated because no key was supplied. ' +
-        "An empty brief beats an invented caption - write these yourself, or add a key above and re-run.</p></div></div>";
+        '<div class="small muted" style="margin-top:8px">' + esc(o.hashtags.note) + "</div>" +
+        '<div class="small faint" style="margin-top:6px">Paste these into the caption box above to have them counted in the score.</div>' +
+        "</div></div>";
     }
     h += "</div>";
   });
@@ -1453,19 +1774,59 @@ function renderRecs() {
 
 function render() {
   const out = $("out");
-  out.innerHTML = renderVerdict() + renderPosts() + renderRecs();
+  const n = state.assets.filter((a) => a.m).length;
+  // Captions lead. The photo comparison still drives which photo they describe,
+  // but it folds away rather than sitting between you and the copy.
+  out.innerHTML = renderPosts() + renderRecs() +
+    (n < 2 ? renderVerdict()
+           : '<details class="card"><summary><strong>Which photo to post</strong> <span class="small faint">- the measured comparison of all ' +
+             n + " shots, and the override</span></summary><div style=\"margin-top:14px\">" + renderVerdict(true) + "</div></details>");
   wireCopies(out);
   out.querySelectorAll("[role=tab]").forEach((t) => t.onclick = () => {
     out.querySelectorAll("[role=tab]").forEach((x) => x.setAttribute("aria-selected", String(x === t)));
     out.querySelectorAll("[data-panel]").forEach((p) => p.classList.toggle("hide", p.dataset.panel !== t.dataset.tab));
   });
   out.querySelectorAll("[data-choose]").forEach((b) => b.onclick = () => choose(b.dataset.choose));
+  wireCaptions(out);
   paintThumbs();
+}
+
+function wireCaptions(root) {
+  const rescore = (plat, idx) => {
+    const box = root.querySelector('[data-score="' + capKey(plat, idx) + '"]');
+    if (!box) return;
+    const wasOpen = !!(box.querySelector("details") || {}).open;   // don't collapse it mid-typing
+    box.innerHTML = renderScoreBlock(plat, Number(idx));
+    const d = box.querySelector("details");
+    if (d && wasOpen) d.open = true;
+  };
+  root.querySelectorAll("textarea[data-cap]").forEach((ta) => {
+    ta.oninput = () => {
+      state.drafts[ta.dataset.cap] = ta.value;
+      const [plat, slot] = ta.dataset.cap.split(":");
+      if (slot === "alt") {
+        // alt text feeds two SEO checks, so every caption on this platform re-scores
+        root.querySelectorAll('[data-score^="' + plat + ':"]').forEach((b) => rescore(plat, b.dataset.score.split(":")[1]));
+      } else rescore(plat, slot);
+    };
+  });
+  root.querySelectorAll("[data-copycap]").forEach((b) => {
+    b.onclick = async () => {
+      const ta = root.querySelector('textarea[data-cap="' + b.dataset.copycap + '"]');
+      if (!ta) return;
+      const old = b.textContent;
+      try {
+        await navigator.clipboard.writeText(ta.value);
+        b.textContent = "Copied"; setTimeout(() => { b.textContent = old; }, 1200);
+      } catch (_) { ta.select(); b.textContent = "Press Ctrl+C"; setTimeout(() => { b.textContent = old; }, 2000); }
+    };
+  });
 }
 
 async function choose(id) {
   if (state.running || state.chosenId === id) return;
   state.chosenId = id;
+  state.drafts = {};        // the captions describe a different photo now
   state.recs = buildRecs();
   if (!state.writing) { render(); return; }
   state.running = true;
@@ -1518,19 +1879,32 @@ function toMarkdown() {
   L.push("");
 
   [...state.platforms].forEach((k) => {
-    L.push("## " + PLATFORMS[k].label, "");
+    const cfg = PLATFORMS[k];
+    L.push("## " + cfg.label, "");
+    if (state.writing) L.push("_" + prov().label + " reads the photo as: " + state.writing[k].subject + "_", "");
+    else L.push("_No API key was supplied, so these are structures to fill in, not finished copy._", "");
+    L.push("Targets: " + cfg.len[0] + "-" + cfg.len[1] + " chars, " + cfg.tags[0] + "-" + cfg.tags[1] +
+      " hashtags, hook inside " + cfg.fold + " chars.", "");
+
+    const set = state.writing ? state.writing[k].captions : scaffoldSet(k);
+    const alt = altTextFor(k);
+    set.forEach((c, idx) => {
+      const text = capText(k, idx);
+      const s = scoreCaption(text, alt, k, state.keyword);
+      L.push("### " + c.angle + "  -  " + s.score + "/100 (SEO " + s.seo + ", engagement " + s.engagement + ")", "");
+      L.push(text, "");
+      const issues = s.checks.filter((x) => x.status === "fail" || x.status === "warn");
+      if (issues.length) {
+        L.push("Outstanding:", "");
+        issues.forEach((x) => L.push("- **" + x.status.toUpperCase() + "** " + x.label + " (" + x.value + ")" + (x.fix ? " - " + x.fix : "")));
+      } else L.push("Every check passes.");
+      L.push("");
+    });
+    L.push("**Alt text:** " + (alt || "_not written yet_"), "");
     if (state.writing) {
       const o = state.writing[k];
-      L.push("_" + prov().label + " reads the photo as: " + o.subject + "_", "");
-      o.captions.forEach((x) => L.push("### " + x.angle + " (" + x.text.length + " chars)", "", x.text, "", "_" + x.rationale + "_", ""));
       L.push("**Hashtags**", "", "- broad: " + (o.hashtags.broad.join(" ") || "-"),
         "- niche: " + (o.hashtags.niche.join(" ") || "-"), "- micro: " + (o.hashtags.micro.join(" ") || "-"), "", o.hashtags.note, "");
-      L.push("**Alt text:** " + o.altText, "");
-    } else {
-      const b = buildBrief().find((x) => x.platform === k);
-      L.push("_Writing brief - no captions were generated because no API key was supplied._", "");
-      b.lines.forEach((l) => L.push("- " + l));
-      L.push("");
     }
   });
 
@@ -1545,7 +1919,10 @@ function toMarkdown() {
     L.push("");
   });
   L.push("---", "", "Sharpness, exposure, contrast, colour, tilt, clutter, subject placement and near-duplicate distance are measured from the pixels. " +
-    "The 1-10 scores and the pick apply documented thresholds and per-platform weights to those numbers - a defensible heuristic, not ground truth.");
+    "The 1-10 scores and the pick apply documented thresholds and per-platform weights to those numbers - a defensible heuristic, not ground truth.", "",
+    "Caption scores are rules applied to the text (keyword placement, length, hashtag count, hook, call to action, clichés), " +
+    "computed locally. They are not predictions: this page has no trend feed, no view counts and no audience data, so a high " +
+    "score means the caption follows the rules that usually help, not that it will reach anyone.");
   if (state.usage.input || state.usage.output)
     L.push("", "Captions written by " + prov().label + " (" + curModel() + "). Tokens: " +
       state.usage.input + " in / " + state.usage.output + " out.");
@@ -1619,6 +1996,11 @@ $("model").onchange = (e) => { state.models[state.provider] = e.target.value; };
 syncProvider();
 $("goal").onchange = (e) => { state.goal = e.target.value; };
 $("niche").oninput = (e) => { state.niche = e.target.value.trim(); };
+$("keyword").oninput = (e) => {
+  state.keyword = e.target.value.trim();
+  if (state.done) render();     // keyword drives the SEO checks - re-grade live
+};
+$("cta").oninput = (e) => { state.cta = e.target.value.trim(); if (state.done) render(); };
 $("pick").onclick = () => $("file").click();
 $("file").onchange = (e) => { addFiles(e.target.files); e.target.value = ""; };
 const drop = $("drop");
